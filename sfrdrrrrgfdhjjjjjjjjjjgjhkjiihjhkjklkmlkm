@@ -6990,8 +6990,6 @@ local ESP_Settings = {
     Chams     = false,
 }
 
-
-
 local Camera     = workspace.CurrentCamera
 local Player     = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -7001,7 +6999,9 @@ local SkeletonColor   = Color3.fromRGB(255, 0, 0)
 local AllSkeletons    = {}
 local AllChams        = {}
 
-
+-- =============================================
+--         SKELETON
+-- =============================================
 
 local function DrawLine()
     local l = Drawing.new("Line")
@@ -7193,21 +7193,21 @@ local function DrawSkeleton(plr)
     else        coroutine.wrap(UpdaterR6)() end
 end
 
-
-
-
+-- =============================================
+--         CHAMS (Highlight)
+-- =============================================
 
 local function ApplyChamsToChar(char, color)
     if AllChams[char] then return end
     local h = Instance.new("Highlight")
-    h.Adornee         = char
-    h.FillColor       = color
-    h.OutlineColor    = color
-    h.FillTransparency    = 0.5   
-    h.OutlineTransparency = 0    
-    h.DepthMode       = Enum.HighlightDepthMode.AlwaysOnTop 
-    h.Parent          = game:GetService("CoreGui")
-    AllChams[char]    = h
+    h.Adornee             = char
+    h.FillColor           = color
+    h.OutlineColor        = color
+    h.FillTransparency    = 0.5
+    h.OutlineTransparency = 0
+    h.DepthMode           = Enum.HighlightDepthMode.AlwaysOnTop
+    h.Parent              = game:GetService("CoreGui")
+    AllChams[char]        = h
 end
 
 local function RemoveChams(char)
@@ -7237,7 +7237,9 @@ local function UpdateChamsColor(color)
     end
 end
 
-
+-- =============================================
+--         BOX / TRACER / NAME ESP
+-- =============================================
 
 local function NewBox(thickness, color)
     local b = Drawing.new("Square")
@@ -7295,7 +7297,6 @@ local function ESP(plr)
                     2, math.huge
                 )
 
-                -- Box
                 if ESP_Settings.Box then
                     local bs = Vector2.new(DistanceY * 2, DistanceY * 4)
                     library.box.Size     = bs
@@ -7304,7 +7305,6 @@ local function ESP(plr)
                     library.box.Visible  = true
                 else library.box.Visible = false end
 
-                -- Tracer
                 if ESP_Settings.Tracer then
                     local fp = Settings.Tracer_Origin == "Bottom"
                         and Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y)
@@ -7316,7 +7316,6 @@ local function ESP(plr)
                     library.tracer.Visible   = true
                 else library.tracer.Visible = false end
 
-                -- Health Bar
                 if ESP_Settings.HealthBar then
                     local hum = plr.Character:FindFirstChild("Humanoid")
                     local hp  = (hum and hum.MaxHealth > 0) and (hum.Health / hum.MaxHealth) or 0
@@ -7332,7 +7331,6 @@ local function ESP(plr)
                     library.greenhealth.Visible = false
                 end
 
-                -- Name Tag
                 if ESP_Settings.NameTag then
                     library.nameTag.Text     = plr.Name
                     library.nameTag.Position = Vector2.new(headPos.X, headPos.Y - 20)
@@ -7369,12 +7367,32 @@ end
 
 
 
+local function HookPlayer(plr)
+    if plr == Player then return end
+
+    plr.CharacterAdded:Connect(function(char)
+        RemoveChams(char)
+        task.wait(0.5) 
+
+        if ESP_Settings.Chams then
+            ApplyChamsToChar(char, Settings.Chams_Color)
+        end
+        if SkeletonEnabled then
+            RemoveSkeleton(plr)
+            DrawSkeleton(plr)
+        end
+    end)
+end
+
+
+
 local activeESPs = {}
 
 local function addPlayer(plr)
     if plr == Player then return end
     if activeESPs[plr] then return end
     activeESPs[plr] = ESP(plr)
+    HookPlayer(plr)
     if ESP_Settings.Chams and plr.Character then
         ApplyChamsToChar(plr.Character, Settings.Chams_Color)
     end
@@ -7389,25 +7407,16 @@ local function removePlayer(plr)
     RemoveSkeleton(plr)
 end
 
-for _, plr in pairs(Players:GetPlayers()) do addPlayer(plr) end
+for _, plr in pairs(Players:GetPlayers()) do
+    addPlayer(plr)
+end
+
 Players.PlayerAdded:Connect(addPlayer)
 Players.PlayerRemoving:Connect(removePlayer)
-
-Players.PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(function(char)
-        task.wait(0.5)
-        if ESP_Settings.Chams then
-            ApplyChamsToChar(char, Settings.Chams_Color)
-        end
-        if SkeletonEnabled then DrawSkeleton(plr) end
-    end)
-end)
-
 
 
 local VisualSection = VisualSubPage:Section({ Name = "ESP", Side = 1 })
 
--- Box ESP
 local BoxToggle = VisualSection:Toggle({
     Name = "Box ESP", Flag = "Toggle_Box", Default = false,
     Callback = function(Value) ESP_Settings.Box = Value end
@@ -7418,7 +7427,6 @@ BoxToggle:Colorpicker({
     Callback = function(Value) Settings.Box_Color = Value end
 })
 
--- Name ESP
 local NameToggle = VisualSection:Toggle({
     Name = "Name ESP", Flag = "Toggle_Name", Default = false,
     Callback = function(Value) ESP_Settings.NameTag = Value end
@@ -7429,7 +7437,6 @@ NameToggle:Colorpicker({
     Callback = function(Value) Settings.NameTag_Color = Value end
 })
 
--- Tracer ESP
 local TracerToggle = VisualSection:Toggle({
     Name = "Tracer ESP", Flag = "Toggle_Tracer", Default = false,
     Callback = function(Value) ESP_Settings.Tracer = Value end
@@ -7440,7 +7447,6 @@ TracerToggle:Colorpicker({
     Callback = function(Value) Settings.Tracer_Color = Value end
 })
 
--- Item ESP
 local ItemToggle = VisualSection:Toggle({
     Name = "Item ESP", Flag = "Toggle_Item", Default = false,
     Callback = function(Value) ESP_Settings.Item = Value end
@@ -7451,19 +7457,16 @@ ItemToggle:Colorpicker({
     Callback = function(Value) Settings.Item_Color = Value end
 })
 
--- Health Bar
 VisualSection:Toggle({
     Name = "Health Bar", Flag = "Toggle_Health", Default = false,
     Callback = function(Value) ESP_Settings.HealthBar = Value end
 })
 
--- Team Check
 VisualSection:Toggle({
     Name = "Team Check", Flag = "Toggle_TeamCheck", Default = false,
     Callback = function(Value) ESP_Settings.TeamCheck = Value end
 })
 
--- Skeleton ESP
 local SkeletonToggle = VisualSection:Toggle({
     Name = "Skeleton ESP", Flag = "Toggle_Skeleton", Default = false,
     Callback = function(Value)
@@ -7483,7 +7486,6 @@ SkeletonToggle:Colorpicker({
     Callback = function(Value) UpdateSkeletonColor(Value) end
 })
 
--- Chams ESP
 local ChamsToggle = VisualSection:Toggle({
     Name = "Chams ESP", Flag = "Toggle_Chams", Default = false,
     Callback = function(Value)
@@ -7496,7 +7498,6 @@ ChamsToggle:Colorpicker({
     Default = Library.Theme.Accent, Alpha = 0,
     Callback = function(Value) UpdateChamsColor(Value) end
 })
-
 
 
 
