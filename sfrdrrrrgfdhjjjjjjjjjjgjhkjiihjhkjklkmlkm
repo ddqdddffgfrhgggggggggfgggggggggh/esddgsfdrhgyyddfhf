@@ -6731,7 +6731,9 @@ local Config = {
     VisibleOnly = true,
     ShowFOVCircle = true,
     Wallbang = false,
-    ShowTargetText = false
+    ShowTargetText = false,
+    Snapline = false,
+    DebugWallbang = false
 }
 
 _G.NearestEnemyHead = nil
@@ -6750,9 +6752,22 @@ local TargetText = Drawing.new("Text")
 TargetText.Size = 18
 TargetText.Center = true
 TargetText.Outline = true
-TargetText.Color = Color3.fromRGB(255, 255, 255)
+TargetText.Color = Color3.fromRGB(255, 255, 0) -- Jaune
 TargetText.Visible = false
 TargetText.Text = ""
+
+local SnaplineOut = Drawing.new("Line")
+SnaplineOut.Thickness = 1
+SnaplineOut.Color = Color3.fromRGB(255, 255, 255)
+SnaplineOut.Visible = false
+
+local DebugWBText = Drawing.new("Text")
+DebugWBText.Size = 18
+DebugWBText.Center = true
+DebugWBText.Outline = true
+DebugWBText.Color = Color3.fromRGB(255, 50, 50)
+DebugWBText.Visible = false
+DebugWBText.Text = "WallBanged"
 
 local RaycastWhitelist = RaycastParams.new()
 RaycastWhitelist.FilterType = Enum.RaycastFilterType.Include
@@ -6767,13 +6782,38 @@ RunService.RenderStepped:Connect(function()
         FOVCircle.Visible = false
     end
     
+    local yOffset = Config.FOV + 20
+    
     if Config.Enabled and Config.ShowTargetText and _G.TargetedPlayer then
         local mousePos = UserInputService:GetMouseLocation()
-        TargetText.Position = Vector2.new(mousePos.X, mousePos.Y + Config.FOV + 20)
+        TargetText.Position = Vector2.new(mousePos.X, mousePos.Y + yOffset)
         TargetText.Text = "Manipulated : " .. _G.TargetedPlayer
         TargetText.Visible = true
+        yOffset = yOffset + 20
     else
         TargetText.Visible = false
+    end
+
+    if Config.Enabled and Config.DebugWallbang and Config.Wallbang and _G.TargetedPlayer and not _G.TargetIsVisible then
+        local mousePos = UserInputService:GetMouseLocation()
+        DebugWBText.Position = Vector2.new(mousePos.X, mousePos.Y + yOffset)
+        DebugWBText.Visible = true
+    else
+        DebugWBText.Visible = false
+    end
+
+    if Config.Enabled and Config.Snapline and _G.NearestEnemyHead then
+        local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(_G.NearestEnemyHead.Position)
+        if onScreen then
+            local mousePos = UserInputService:GetMouseLocation()
+            SnaplineOut.From = Vector2.new(mousePos.X, mousePos.Y)
+            SnaplineOut.To = Vector2.new(pos.X, pos.Y)
+            SnaplineOut.Visible = true
+        else
+            SnaplineOut.Visible = false
+        end
+    else
+        SnaplineOut.Visible = false
     end
 end)
 
@@ -6797,6 +6837,30 @@ local function IsVisible(targetPart)
     local result = workspace:Raycast(origin, direction, rayParams)
     
     return result and result.Instance and result.Instance:IsDescendantOf(targetPart.Parent)
+end
+
+local function IsActuallyVisible(targetPart)
+    if not targetPart or not targetPart.Parent then return false end
+    local camera = workspace.CurrentCamera
+    local origin = camera.CFrame.Position
+    local direction = (targetPart.Position - origin).Unit * 500
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, camera}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    rayParams.IgnoreWater = true
+    
+    local result = workspace:Raycast(origin, direction, rayParams)
+    
+    if result and result.Instance then
+        if result.Instance:IsDescendantOf(targetPart.Parent) then
+            return true
+        end
+        if result.Instance.Transparency >= 1 or not result.Instance.CanCollide then
+            return true 
+        end
+    end
+    
+    return not result
 end
 
 task.spawn(function()
@@ -6829,9 +6893,11 @@ task.spawn(function()
             
             _G.NearestEnemyHead = nearestEnemy and nearestEnemy.Character and nearestEnemy.Character:FindFirstChild("Head")
             _G.TargetedPlayer = nearestEnemy and nearestEnemy.Name or nil
+            _G.TargetIsVisible = nearestEnemy and IsActuallyVisible(nearestEnemy.Character.Head) or false
         else
             _G.NearestEnemyHead = nil
             _G.TargetedPlayer = nil
+            _G.TargetIsVisible = false
         end
     end
 end)
@@ -6951,6 +7017,30 @@ SilentAimSection:Toggle({
         Config.ShowTargetText = v
         if not v then
             TargetText.Visible = false
+        end
+    end
+})
+
+SilentAimSection:Toggle({
+    Name = "Snapline",
+    Flag = "SilentAimSnapline",
+    Default = false,
+    Callback = function(v)
+        Config.Snapline = v
+        if not v then
+            SnaplineOut.Visible = false
+        end
+    end
+})
+
+SilentAimSection:Toggle({
+    Name = "Show Debug Wallbang",
+    Flag = "DebugWallbang",
+    Default = false,
+    Callback = function(v)
+        Config.DebugWallbang = v
+        if not v then
+            DebugWBText.Visible = false
         end
     end
 })
@@ -7542,89 +7632,61 @@ local spinSpeed = 20
 
 
 
-local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
 
-local currentZoom = 10
-local MIN_ZOOM = 5
-local MAX_ZOOM = 20
-local ZOOM_STEP = 1
-
+-- 3e personne
 local thirdPersonEnabled = false
 
 local function forceThirdPerson()
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-
-	camera.CameraType = Enum.CameraType.Custom
-	camera.CameraSubject = humanoid
-	player.CameraMode = Enum.CameraMode.Classic
-	player.CameraMinZoomDistance = currentZoom
-	player.CameraMaxZoomDistance = currentZoom
+    local lplr = Players.LocalPlayer
+    local char = lplr.Character or lplr.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+    local cam = workspace.CurrentCamera
+    cam.CameraType = Enum.CameraType.Custom
+    cam.CameraSubject = hum
+    lplr.CameraMode = Enum.CameraMode.Classic
+    lplr.CameraMinZoomDistance = 10
+    lplr.CameraMaxZoomDistance = 10
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed or not thirdPersonEnabled then return end
-
-	if input.KeyCode == Enum.KeyCode.E then
-		currentZoom = math.max(MIN_ZOOM, currentZoom - ZOOM_STEP)
-	elseif input.KeyCode == Enum.KeyCode.A then
-		currentZoom = math.min(MAX_ZOOM, currentZoom + ZOOM_STEP)
-	end
-
-	player.CameraMinZoomDistance = currentZoom
-	player.CameraMaxZoomDistance = currentZoom
-end)
-
-RunService.RenderStepped:Connect(function()
-	if thirdPersonEnabled then
-		forceThirdPerson()
-	end
-end)
-
-
-
-
-
-                    local Toggle = AntiiiSection:Toggle({
-                    Name = "3e Personne",
-                    Flag = "ThirdPerson_Toggle",
-                    Default = false,
-                    Callback = function(state)
+AntiiiSection:Toggle({
+    Name = "3e Personne",
+    Flag = "ThirdPerson_Toggle",
+    Default = false,
+    Callback = function(state)
         thirdPersonEnabled = state
+        local lplr = Players.LocalPlayer
         if state then
             forceThirdPerson()
         else
-            player.CameraMinZoomDistance = 0.5
-            player.CameraMaxZoomDistance = 128
+            lplr.CameraMinZoomDistance = 0.5
+            lplr.CameraMaxZoomDistance = 128
         end
-                    end
-                })
+    end
+})
 
-
-player.CharacterAdded:Connect(function()
-	if thirdPersonEnabled then
-		forceThirdPerson()
-	end
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    if thirdPersonEnabled then forceThirdPerson() end
 end)
 
+RunService.RenderStepped:Connect(function()
+    if thirdPersonEnabled then forceThirdPerson() end
+end)
 
-Players = game:GetService("Players")
-LocalPlayer = Players.LocalPlayer
-
-                AntiiiSection:Slider({
-                    Name = "WalkSpeed",
-                    Flag = "AntiAimAmountX",
-                    Min = 10,
-                    Suffix = "px",
-                    Max = 200,
-                    Default = 16,
-                    Decimals = 1,
-                    Callback = function(v)
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-            LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = v
-        end                    end
-                })
+AntiiiSection:Slider({
+    Name = "WalkSpeed",
+    Flag = "AntiAimAmountX",
+    Min = 10,
+    Suffix = "px",
+    Max = 200,
+    Default = 16,
+    Decimals = 1,
+    Callback = function(v)
+        local lplr = Players.LocalPlayer
+        if lplr.Character and lplr.Character:FindFirstChildOfClass("Humanoid") then
+            lplr.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = v
+        end
+    end
+})
 
 
 
@@ -7645,7 +7707,24 @@ LocalPlayer = Players.LocalPlayer
 
 
 
-local camera = workspace.CurrentCamera
+local normalFOV = 70
+local zoomFOVAmount = 20
+local fovZoomHeld = false
+local fovLoop = nil
+
+local function updateFOVLoop()
+    if fovLoop then return end
+    fovLoop = game:GetService("RunService").RenderStepped:Connect(function()
+        if workspace.CurrentCamera then
+            if fovZoomHeld then
+                workspace.CurrentCamera.FieldOfView = zoomFOVAmount
+            else
+                workspace.CurrentCamera.FieldOfView = normalFOV
+            end
+        end
+    end)
+end
+updateFOVLoop()
 
 AntiiiSection:Slider({
     Name = "Change FOV",
@@ -7655,9 +7734,40 @@ AntiiiSection:Slider({
     Max = 120,
     Default = 70,
     Decimals = 1,
-
     Callback = function(v)
-        camera.FieldOfView = v
+        normalFOV = v
+    end
+})
+
+AntiiiSection:Toggle({
+    Name = "Zoom FOV (Maintien T)",
+    Flag = "ZoomFOV_Enabled",
+    Default = false,
+    Callback = function(v)
+        if not v then
+            fovZoomHeld = false
+        end
+    end
+}):Keybind({
+    Flag = "ZoomFOV_Keybind",
+    Default = Enum.KeyCode.T,
+    Mode = "Hold",
+    Callback = function(held)
+        if not Library.Flags["ZoomFOV_Enabled"] then return end
+        fovZoomHeld = held
+    end
+})
+
+AntiiiSection:Slider({
+    Name = "Zoom FOV Amount",
+    Flag = "ZoomFOV_Amount",
+    Min = 1,
+    Max = 120,
+    Default = 20,
+    Decimals = 1,
+    Suffix = "px",
+    Callback = function(v)
+        zoomFOVAmount = v
     end
 })
                 
@@ -7920,51 +8030,46 @@ local function updatePlayerInfo(tp)
 end
 
 
-local function getPlayerNames()
-    local names = {}
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            table.insert(names, plr.Name)
-        end
+local function getPNames()
+    local n = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= lp then n[#n+1] = p.Name end
     end
-    return names
+    return n
 end
-
-local function Scan()
-    if Searchbox then
-        Searchbox:Refresh(getPlayerNames(), true)
-    end
-end
-
 
 local Searchbox = PPSection:Searchbox({
     Name = "Players",
     Flag = "Searchbox_Players",
-    Items = getPlayerNames(),
+    Items = getPNames(),
     Multi = false,
     Default = nil,
     Callback = function(Value)
         SelectedPlayer = Players:FindFirstChild(Value)
-        
         if CFG.ENABLED and SelectedPlayer then
             updatePlayerInfo(SelectedPlayer)
         end
     end
 })
 
-Players.PlayerAdded:Connect(Scan)
-Players.PlayerRemoving:Connect(function(player)
-    if SelectedPlayer == player then
+local function Scan()
+    if Searchbox then
+        Searchbox:Refresh(getPNames(), true)
+    end
+end
+
+Players.PlayerAdded:Connect(function(p)
+    Scan()
+end)
+Players.PlayerRemoving:Connect(function(p)
+    if SelectedPlayer == p then
         SelectedPlayer = nil
         ui.main.Visible = false
     end
     Scan()
 end)
 
-
-PPSection:Button():Add("Refresh Players", function()
-    Scan()
-end)
+PPSection:Button():Add("Refresh Players", Scan)
 
 
 PPSection:Toggle({
