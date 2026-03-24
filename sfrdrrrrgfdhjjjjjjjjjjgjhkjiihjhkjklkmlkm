@@ -17,46 +17,46 @@ local Library do
         return CoreGui
     end
 
-    local LocalPlayer = Players.LocalPlayer
-    local Camera = Workspace.CurrentCamera
-    local Mouse = LocalPlayer:GetMouse()
+    LocalPlayer = Players.LocalPlayer
+    Camera = Workspace.CurrentCamera
+    Mouse = LocalPlayer:GetMouse()
 
-    local FromRGB = Color3.fromRGB
-    local FromHSV = Color3.fromHSV
-    local FromHex = Color3.fromHex
+    FromRGB = Color3.fromRGB
+    FromHSV = Color3.fromHSV
+    FromHex = Color3.fromHex
 
-    local RGBSequence = ColorSequence.new
-    local RGBSequenceKeypoint = ColorSequenceKeypoint.new
-    local NumSequence = NumberSequence.new
-    local NumSequenceKeypoint = NumberSequenceKeypoint.new
+    RGBSequence = ColorSequence.new
+    RGBSequenceKeypoint = ColorSequenceKeypoint.new
+    NumSequence = NumberSequence.new
+    NumSequenceKeypoint = NumberSequenceKeypoint.new
 
-    local UDim2New = UDim2.new
-    local UDimNew = UDim.new
-    local Vector2New = Vector2.new
+    UDim2New = UDim2.new
+    UDimNew = UDim.new
+    Vector2New = Vector2.new
 
-    local MathClamp = math.clamp
-    local MathFloor = math.floor
-    local MathAbs = math.abs
-    local MathSin = math.sin
+    MathClamp = math.clamp
+    MathFloor = math.floor
+    MathAbs = math.abs
+    MathSin = math.sin
 
-    local TableInsert = table.insert
-    local TableFind = table.find
-    local TableRemove = table.remove
-    local TableConcat = table.concat
-    local TableClone = table.clone
-    local TableUnpack = table.unpack
+    TableInsert = table.insert
+    TableFind = table.find
+    TableRemove = table.remove
+    TableConcat = table.concat
+    TableClone = table.clone
+    TableUnpack = table.unpack
 
-    local StringFormat = string.format
-    local StringFind = string.find
-    local StringGSub = string.gsub
-    local StringLower = string.lower
-    local StringLen = string.len
+    StringFormat = string.format
+    StringFind = string.find
+    StringGSub = string.gsub
+    StringLower = string.lower
+    StringLen = string.len
 
-    local InstanceNew = Instance.new
+    InstanceNew = Instance.new
 
-    local RectNew = Rect.new
+    RectNew = Rect.new
 
-    local IsMobile = UserInputService.TouchEnabled or false
+    IsMobile = UserInputService.TouchEnabled or false
 
     Library = {
         Theme =  { },
@@ -6039,9 +6039,9 @@ local Library do
     end
 
     Library.CreateSettingsPage = function(self, Window, Watermark, KeybindList)
-        local SettingsPage = Window:Page({Name = "Settings", SubPages = true}) do 
-            local ThemingSubPage = SettingsPage:SubPage({Name = "Theming", Columns = 2}) do 
-                local ThemesSection = ThemingSubPage:Section({Name = "Themes", Side = 1}) do
+        SettingsPage = Window:Page({Name = "Settings", SubPages = true}) do 
+            ThemingSubPage = SettingsPage:SubPage({Name = "Theming", Columns = 2}) do 
+                ThemesSection = ThemingSubPage:Section({Name = "Themes", Side = 1}) do
                     for Index, Value in Library.Theme do 
                         ThemesSection:Label(Index):Colorpicker({
                             Name = Index,
@@ -6056,8 +6056,8 @@ local Library do
                 end
             end
 
-            local ConfigsSubPage = SettingsPage:SubPage({Name = "Configs", Columns = 2}) do 
-                local ConfigsSection = ConfigsSubPage:Section({Name = "Configs", Side = 1}) do
+            ConfigsSubPage = SettingsPage:SubPage({Name = "Configs", Columns = 2}) do 
+                ConfigsSection = ConfigsSubPage:Section({Name = "Configs", Side = 1}) do
                     local ConfigName
                     local ConfigSelected
 
@@ -6081,7 +6081,7 @@ local Library do
                         end
                     })
 
-                    local CreateAndDeleteButton = ConfigsSection:Button()
+                    CreateAndDeleteButton = ConfigsSection:Button()
 
                     CreateAndDeleteButton:Add("Create", function()
                         if ConfigName and ConfigName ~= "" then
@@ -6104,7 +6104,7 @@ local Library do
                         end
                     end)
 
-                    local LoadAndSaveButton = ConfigsSection:Button()    
+                    LoadAndSaveButton = ConfigsSection:Button()    
 
                     LoadAndSaveButton:Add("Load", function()
                         if ConfigSelected then
@@ -6130,8 +6130,8 @@ local Library do
                 end
             end
 
-			local SettingsSubPage = SettingsPage:SubPage({Name = "Settings", Columns = 2}) do 
-			    local SettingsSection = SettingsSubPage:Section({Name = "Settings", Side = 1}) do
+			SettingsSubPage = SettingsPage:SubPage({Name = "Settings", Columns = 2}) do 
+			    SettingsSection = SettingsSubPage:Section({Name = "Settings", Side = 1}) do
 			        SettingsSection:Toggle({
 			            Name = "Watermark",
 			            Flag = "Watermark",
@@ -6348,9 +6348,21 @@ fovCircle.Visible = false
 
 local currentTarget = nil
 
+local alliedTeams = {
+    ["ClasseD"] = true,
+    ["InsurrectionDuChaos"] = true,
+}
+
 local function checkTeam(player)
-    if teamCheck and player.Team == plr.Team then
-        return true
+    if teamCheck then
+        if player.Team == plr.Team then
+            return true
+        end
+        local myTeamName = plr.Team and plr.Team.Name or ""
+        local theirTeamName = player.Team and player.Team.Name or ""
+        if alliedTeams[myTeamName] and alliedTeams[theirTeamName] then
+            return true
+        end
     end
     return false
 end
@@ -6535,19 +6547,19 @@ local KeybindList = Library:KeybindList()
 
 --- TAB
 do 
-    local CombatPage = Window:Page({Name = "Combat", SubPages = true})
-    local UtilPage = Window:Page({Name = "Utilitaire", SubPages = true})
-    local GunPage = Window:Page({Name = "Gun Mods", SubPages = true})
-    local SkinPage = Window:Page({Name = "Skin ＆ Local", SubPages = true})
-    local TpPage = Window:Page({Name = "Téléporation", SubPages = true})
+    CombatPage = Window:Page({Name = "Combat", SubPages = true})
+    UtilPage = Window:Page({Name = "Utilitaire", SubPages = true})
+    GunPage = Window:Page({Name = "Gun Mods", SubPages = true})
+    SkinPage = Window:Page({Name = "Skin ＆ Local", SubPages = true})
+    TpPage = Window:Page({Name = "Téléporation", SubPages = true})
 
 
 
-    local SettingsPage = Library:CreateSettingsPage(Window, Watermark, KeybindList) 
+    SettingsPage = Library:CreateSettingsPage(Window, Watermark, KeybindList) 
     
     do --Section Tab
-        local AimbotSubPage = CombatPage:SubPage({Name = "Aimbot", Columns = 2}) 
-        local VisualSubPage = CombatPage:SubPage({Name = "Visual", Columns = 2}) 
+        AimbotSubPage = CombatPage:SubPage({Name = "Aimbot", Columns = 2}) 
+        VisualSubPage = CombatPage:SubPage({Name = "Visual", Columns = 2}) 
 
 
 
@@ -6581,7 +6593,7 @@ do
 
 
         do 
-            local SilentAimSection = AimbotSubPage:Section({Name = "Aimbot", Side = 1}) do -- Silent aim section
+            SilentAimSection = AimbotSubPage:Section({Name = "Aimbot", Side = 1}) do -- Silent aim section
                 SilentAimSection:Toggle({
                     Name = "Enabled",
                     Flag = "SilentAimEnabled",
@@ -6592,7 +6604,7 @@ do
                     end
                 })
 
- local Toggle = SilentAimSection:Toggle({
+ Toggle = SilentAimSection:Toggle({
     Name = "FoV Circle",
     Flag = "Circle Enabled",
     Default = false,
@@ -6716,7 +6728,7 @@ Toggle:Colorpicker({
 
 
 
-local SilentAimSection = AimbotSubPage:Section({Name = "Silent Aim", Side = 2}) do 
+SilentAimSection = AimbotSubPage:Section({Name = "Silent Aim", Side = 2}) do 
 
 
 Players = game:GetService("Players")
@@ -6871,7 +6883,13 @@ task.spawn(function()
             
             for _, player in pairs(Players:GetPlayers()) do
                 if player ~= LocalPlayer and player.Character then
-                    if Config.TeamCheck and player.Team == LocalPlayer.Team then continue end
+                    if Config.TeamCheck then
+                        if player.Team == LocalPlayer.Team then continue end
+                        local myTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
+                        local theirTeam = player.Team and player.Team.Name or ""
+                        local allied = {["ClasseD"] = true, ["InsurrectionDuChaos"] = true}
+                        if allied[myTeam] and allied[theirTeam] then continue end
+                    end
                     
                     local humanoid = player.Character:FindFirstChild("Humanoid")
                     local head = player.Character:FindFirstChild("Head")
@@ -6970,7 +6988,7 @@ SilentAimSection:Slider({
     end
 })
 
-SilentAimSection:Toggle({
+fovCircleToggle = SilentAimSection:Toggle({
     Name = "Fov Circle",
     Flag = "FovCircle",
     Default = true,
@@ -6979,6 +6997,16 @@ SilentAimSection:Toggle({
         if not v then
             FOVCircle.Visible = false
         end
+    end
+})
+
+fovCircleToggle:Colorpicker({
+    Name = "Couleur FOV",
+    Flag = "SilentFOVColor",
+    Default = Color3.fromRGB(255, 255, 255),
+    Alpha = 0,
+    Callback = function(v)
+        FOVCircle.Color = v
     end
 })
 
@@ -7045,10 +7073,224 @@ SilentAimSection:Toggle({
     end
 })
 
+-- Inventory Inspector (Modern UI)
+local invInspectorEnabled = false
+local lastInspectedPlayer = nil
 
+local invUI = {}
+invUI.sc = Instance.new("ScreenGui")
+invUI.sc.Name = "SilentAimInspector_Modern"
+invUI.sc.ResetOnSpawn = false
+invUI.sc.Parent = game:GetService("CoreGui")
 
+invUI.main = Instance.new("Frame")
+invUI.main.Size = UDim2.new(0, 250, 0, 300) 
+invUI.main.Position = UDim2.new(0, 20, 0.5, -150)
+invUI.main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+invUI.main.BorderSizePixel = 0
+invUI.main.Visible = false
+invUI.main.Parent = invUI.sc
 
+Instance.new("UICorner", invUI.main).CornerRadius = UDim.new(0, 8)
 
+invUI.st = Instance.new("UIStroke", invUI.main)
+invUI.st.Color = Color3.fromRGB(152, 235, 96)
+invUI.st.Thickness = 2
+
+invUI.content = Instance.new("Frame")
+invUI.content.Size = UDim2.new(1, -20, 1, -20)
+invUI.content.Position = UDim2.new(0, 10, 0, 10)
+invUI.content.BackgroundTransparency = 1
+invUI.content.Parent = invUI.main
+
+invUI.avatarFrame = Instance.new("Frame")
+invUI.avatarFrame.Size = UDim2.new(0, 60, 0, 60)
+invUI.avatarFrame.Position = UDim2.new(0, 0, 0, 0)
+invUI.avatarFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+invUI.avatarFrame.BorderSizePixel = 0
+invUI.avatarFrame.Parent = invUI.content
+
+Instance.new("UICorner", invUI.avatarFrame).CornerRadius = UDim.new(0, 6)
+
+invUI.avatarImg = Instance.new("ImageLabel")
+invUI.avatarImg.Size = UDim2.new(1, 0, 1, 0)
+invUI.avatarImg.BackgroundTransparency = 1
+invUI.avatarImg.Parent = invUI.avatarFrame
+
+Instance.new("UICorner", invUI.avatarImg).CornerRadius = UDim.new(0, 6)
+
+invUI.playerName = Instance.new("TextLabel")
+invUI.playerName.Size = UDim2.new(0, 160, 0, 30)
+invUI.playerName.Position = UDim2.new(0, 70, 0, 0)
+invUI.playerName.BackgroundTransparency = 1
+invUI.playerName.Font = Enum.Font.GothamBold
+invUI.playerName.TextColor3 = Color3.fromRGB(255, 255, 255)
+invUI.playerName.TextSize = 16
+invUI.playerName.TextXAlignment = Enum.TextXAlignment.Left
+invUI.playerName.Text = "Player"
+invUI.playerName.Parent = invUI.content
+
+invUI.hpLabel = Instance.new("TextLabel")
+invUI.hpLabel.Size = UDim2.new(0, 160, 0, 20)
+invUI.hpLabel.Position = UDim2.new(0, 70, 0, 35)
+invUI.hpLabel.BackgroundTransparency = 1
+invUI.hpLabel.Font = Enum.Font.Gotham
+invUI.hpLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+invUI.hpLabel.TextSize = 14
+invUI.hpLabel.TextXAlignment = Enum.TextXAlignment.Left
+invUI.hpLabel.Text = "HP: 100/100"
+invUI.hpLabel.Parent = invUI.content
+
+invUI.separator = Instance.new("Frame")
+invUI.separator.Size = UDim2.new(1, 0, 0, 1)
+invUI.separator.Position = UDim2.new(0, 0, 0, 75)
+invUI.separator.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+invUI.separator.BorderSizePixel = 0
+invUI.separator.Parent = invUI.content
+
+invUI.invHeader = Instance.new("TextLabel")
+invUI.invHeader.Size = UDim2.new(1, 0, 0, 20)
+invUI.invHeader.Position = UDim2.new(0, 0, 0, 85)
+invUI.invHeader.BackgroundTransparency = 1
+invUI.invHeader.Font = Enum.Font.GothamBold
+invUI.invHeader.TextColor3 = Color3.fromRGB(180, 180, 180)
+invUI.invHeader.TextSize = 12
+invUI.invHeader.TextXAlignment = Enum.TextXAlignment.Left
+invUI.invHeader.Text = "INVENTAIRE"
+invUI.invHeader.Parent = invUI.content
+
+invUI.invScroll = Instance.new("ScrollingFrame")
+invUI.invScroll.Size = UDim2.new(1, 0, 0, 165)
+invUI.invScroll.Position = UDim2.new(0, 0, 0, 110)
+invUI.invScroll.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+invUI.invScroll.BorderSizePixel = 0
+invUI.invScroll.ScrollBarThickness = 4
+invUI.invScroll.ScrollBarImageColor3 = Color3.fromRGB(152, 235, 96)
+invUI.invScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+invUI.invScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+invUI.invScroll.Parent = invUI.content
+
+Instance.new("UICorner", invUI.invScroll).CornerRadius = UDim.new(0, 6)
+
+invUI.invLayout = Instance.new("UIListLayout")
+invUI.invLayout.Padding = UDim.new(0, 5)
+invUI.invLayout.Parent = invUI.invScroll
+
+local function createInvItemFrame(itemName, isEquipped)
+    local item = Instance.new("Frame")
+    item.Size = UDim2.new(1, -10, 0, 35)
+    item.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    item.BorderSizePixel = 0
+    Instance.new("UICorner", item).CornerRadius = UDim.new(0, 4)
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -65, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Text = itemName
+    label.Parent = item
+    
+    if isEquipped then
+        local equipped = Instance.new("TextLabel")
+        equipped.Size = UDim2.new(0, 50, 0, 15)
+        equipped.Position = UDim2.new(1, -55, 0, 10)
+        equipped.BackgroundColor3 = Color3.fromRGB(50, 120, 50)
+        equipped.Font = Enum.Font.GothamBold
+        equipped.TextColor3 = Color3.fromRGB(255, 255, 255)
+        equipped.TextSize = 10
+        equipped.Text = "ÉQUIPÉ"
+        equipped.Parent = item
+        Instance.new("UICorner", equipped).CornerRadius = UDim.new(0, 3)
+    end
+    return item
+end
+
+local function clearInv()
+    for _, child in pairs(invUI.invScroll:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+end
+
+local function updateTargetedPlayerInfo(playerName)
+    local targetPlayer = Players:FindFirstChild(playerName)
+    if not targetPlayer then invUI.main.Visible = false return end
+    
+    invUI.playerName.Text = targetPlayer.Name
+    
+    pcall(function()
+        invUI.avatarImg.Image = Players:GetUserThumbnailAsync(targetPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+    end)
+    
+    local char = targetPlayer.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            invUI.hpLabel.Text = "HP: " .. math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth)
+        else
+            invUI.hpLabel.Text = "HP: ?/?"
+        end
+    else
+        invUI.hpLabel.Text = "HP: En attente..."
+    end
+    
+    clearInv()
+    local hasItems = false
+    
+    local backpack = targetPlayer:FindFirstChild("Backpack")
+    if backpack then
+        for _, item in pairs(backpack:GetChildren()) do
+            if item:IsA("Tool") then
+                createInvItemFrame(item.Name, false).Parent = invUI.invScroll
+                hasItems = true
+            end
+        end
+    end
+    
+    if char then
+        for _, item in pairs(char:GetChildren()) do
+            if item:IsA("Tool") then
+                createInvItemFrame(item.Name, true).Parent = invUI.invScroll
+                hasItems = true
+            end
+        end
+    end
+    
+    if not hasItems then
+        local emptyItem = createInvItemFrame("Inventaire vide", false)
+        emptyItem.Parent = invUI.invScroll
+    end
+    
+    invUI.main.Visible = true
+end
+
+task.spawn(function()
+    while task.wait(0.15) do
+        if invInspectorEnabled and Config.Enabled and _G.TargetedPlayer then
+            updateTargetedPlayerInfo(_G.TargetedPlayer)
+            lastInspectedPlayer = _G.TargetedPlayer
+        else
+            invUI.main.Visible = false
+            lastInspectedPlayer = nil
+        end
+    end
+end)
+
+SilentAimSection:Toggle({
+    Name = "Inventory Inspector",
+    Flag = "InvInspector",
+    Default = false,
+    Callback = function(v)
+        invInspectorEnabled = v
+        if not v then
+            invUI.main.Visible = false
+            lastInspectedPlayer = nil
+        end
+    end
+})
 
 
 local Settings = {
@@ -7080,10 +7322,6 @@ local SkeletonEnabled = false
 local SkeletonColor   = Color3.fromRGB(255, 0, 0)
 local AllSkeletons    = {}
 local AllChams        = {}
-
--- =============================================
---         SKELETON
--- =============================================
 
 local function DrawLine()
     local l = Drawing.new("Line")
@@ -7319,9 +7557,6 @@ local function UpdateChamsColor(color)
     end
 end
 
--- =============================================
---         BOX / TRACER / NAME ESP
--- =============================================
 
 local function NewBox(thickness, color)
     local b = Drawing.new("Square")
@@ -7497,9 +7732,9 @@ Players.PlayerAdded:Connect(addPlayer)
 Players.PlayerRemoving:Connect(removePlayer)
 
 
-local VisualSection = VisualSubPage:Section({ Name = "ESP", Side = 1 })
+VisualSection = VisualSubPage:Section({ Name = "ESP", Side = 1 })
 
-local BoxToggle = VisualSection:Toggle({
+BoxToggle = VisualSection:Toggle({
     Name = "Box ESP", Flag = "Toggle_Box", Default = false,
     Callback = function(Value) ESP_Settings.Box = Value end
 })
@@ -7509,7 +7744,7 @@ BoxToggle:Colorpicker({
     Callback = function(Value) Settings.Box_Color = Value end
 })
 
-local NameToggle = VisualSection:Toggle({
+NameToggle = VisualSection:Toggle({
     Name = "Name ESP", Flag = "Toggle_Name", Default = false,
     Callback = function(Value) ESP_Settings.NameTag = Value end
 })
@@ -7519,7 +7754,7 @@ NameToggle:Colorpicker({
     Callback = function(Value) Settings.NameTag_Color = Value end
 })
 
-local TracerToggle = VisualSection:Toggle({
+TracerToggle = VisualSection:Toggle({
     Name = "Tracer ESP", Flag = "Toggle_Tracer", Default = false,
     Callback = function(Value) ESP_Settings.Tracer = Value end
 })
@@ -7529,7 +7764,7 @@ TracerToggle:Colorpicker({
     Callback = function(Value) Settings.Tracer_Color = Value end
 })
 
-local ItemToggle = VisualSection:Toggle({
+ItemToggle = VisualSection:Toggle({
     Name = "Item ESP", Flag = "Toggle_Item", Default = false,
     Callback = function(Value) ESP_Settings.Item = Value end
 })
@@ -7549,7 +7784,7 @@ VisualSection:Toggle({
     Callback = function(Value) ESP_Settings.TeamCheck = Value end
 })
 
-local SkeletonToggle = VisualSection:Toggle({
+SkeletonToggle = VisualSection:Toggle({
     Name = "Skeleton ESP", Flag = "Toggle_Skeleton", Default = false,
     Callback = function(Value)
         SkeletonEnabled = Value
@@ -7568,7 +7803,7 @@ SkeletonToggle:Colorpicker({
     Callback = function(Value) UpdateSkeletonColor(Value) end
 })
 
-local ChamsToggle = VisualSection:Toggle({
+ChamsToggle = VisualSection:Toggle({
     Name = "Chams ESP", Flag = "Toggle_Chams", Default = false,
     Callback = function(Value)
         ESP_Settings.Chams = Value
@@ -7583,8 +7818,8 @@ ChamsToggle:Colorpicker({
 
 
 
-        local UtilAimSubPage = UtilPage:SubPage({Name = "Players", Columns = 2}) 
-        local AntiiiSection = UtilAimSubPage:Section({Name = "Players Movement", Side = 1}) 
+        UtilAimSubPage = UtilPage:SubPage({Name = "Players", Columns = 2}) 
+        AntiiiSection = UtilAimSubPage:Section({Name = "Players Movement", Side = 1}) 
 
 
 
@@ -7599,7 +7834,7 @@ local spinSpeed = 20
 
 
 
-                    local Toggle = AntiiiSection:Toggle({
+                    Toggle = AntiiiSection:Toggle({
                     Name = "Spinbot",
                     Flag = "Spinbot_Toggle",
                     Default = false,
@@ -7672,6 +7907,62 @@ RunService.RenderStepped:Connect(function()
     if thirdPersonEnabled then forceThirdPerson() end
 end)
 
+-- Saut accroupi
+local crouchJumpEnabled = false
+local UIS = game:GetService("UserInputService")
+
+AntiiiSection:Toggle({
+    Name = "Saut Accroupi",
+    Flag = "CrouchJump_Toggle",
+    Default = false,
+    Callback = function(state)
+        crouchJumpEnabled = state
+    end
+})
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if not crouchJumpEnabled then return end
+    if input.KeyCode == Enum.KeyCode.Space then
+        local lplr = Players.LocalPlayer
+        local char = lplr.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then
+                hum.UseJumpPower = true
+                if Library.Flags and Library.Flags["CrouchJump_Power"] then
+                    hum.JumpPower = Library.Flags["CrouchJump_Power"]
+                else
+                    hum.JumpPower = 45
+                end
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+end)
+
+
+AntiiiSection:Toggle({
+    Name = "Zoom FOV (Maintien T)",
+    Flag = "ZoomFOV_Enabled",
+    Default = false,
+    Callback = function(v)
+        if not v then
+            fovZoomHeld = false
+        end
+    end
+}):Keybind({
+    Flag = "ZoomFOV_Keybind",
+    Default = Enum.KeyCode.T,
+    Mode = "Hold",
+    Callback = function(held)
+        if not Library.Flags["ZoomFOV_Enabled"] then return end
+        fovZoomHeld = held
+    end
+})
+
+
+
 AntiiiSection:Slider({
     Name = "WalkSpeed",
     Flag = "AntiAimAmountX",
@@ -7739,24 +8030,6 @@ AntiiiSection:Slider({
     end
 })
 
-AntiiiSection:Toggle({
-    Name = "Zoom FOV (Maintien T)",
-    Flag = "ZoomFOV_Enabled",
-    Default = false,
-    Callback = function(v)
-        if not v then
-            fovZoomHeld = false
-        end
-    end
-}):Keybind({
-    Flag = "ZoomFOV_Keybind",
-    Default = Enum.KeyCode.T,
-    Mode = "Hold",
-    Callback = function(held)
-        if not Library.Flags["ZoomFOV_Enabled"] then return end
-        fovZoomHeld = held
-    end
-})
 
 AntiiiSection:Slider({
     Name = "Zoom FOV Amount",
@@ -7770,9 +8043,29 @@ AntiiiSection:Slider({
         zoomFOVAmount = v
     end
 })
+
+AntiiiSection:Slider({
+    Name = "JumpPower",
+    Flag = "CrouchJump_Power",
+    Min = 40,
+    Max = 300,
+    Default = 45,
+    Decimals = 5,
+    Callback = function(val)
+        local lplr = Players.LocalPlayer
+        local char = lplr.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then
+                hum.UseJumpPower = true
+                hum.JumpPower = val
+            end
+        end
+    end
+})
                 
 
-local PPSection = UtilAimSubPage:Section({Name = "Players List", Side = 2}) 
+PPSection = UtilAimSubPage:Section({Name = "Players List", Side = 2}) 
     
 Players = game:GetService("Players")
 RunService = game:GetService("RunService")
@@ -8143,7 +8436,7 @@ end)
 
             
 
-        local sssSection = UtilAimSubPage:Section({Name = "Other", Side = 2}) 
+        sssSection = UtilAimSubPage:Section({Name = "Other", Side = 2}) 
 
 
 
@@ -8176,9 +8469,9 @@ end)
 
 
 
-        local UtilAimSubPage = UtilPage:SubPage({Name = "Staff", Columns = 2}) 
+        UtilAimSubPage = UtilPage:SubPage({Name = "Staff", Columns = 2}) 
 
-        local StaffSection = UtilAimSubPage:Section({Name = "Info-Staff", Side = 1}) 
+        StaffSection = UtilAimSubPage:Section({Name = "Info-Staff", Side = 1}) 
 
 
 local groupId = 10944938
@@ -8196,34 +8489,378 @@ StaffSection:Toggle({
     end
 })
 StaffSection:Button():Add("Vérifier Staff", function()
-    local staffFound = false
-    for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
-        if p:IsInGroup(groupId) and p ~= lp then
-            staffFound = true
-            Library:Notification("Staff détecté", p.Name .. " est dans le serveur.", 8)
-            if autoKickEnabled then
-                lp:Kick("Auto-kick : Un staff est dans la game.")
+    local playersToCheck = game:GetService("Players"):GetPlayers()
+    local staffFoundCount = 0
+    local checkedCount = 0
+    
+    for _, p in ipairs(playersToCheck) do
+        if p == lp then 
+            checkedCount = checkedCount + 1
+            if checkedCount == #playersToCheck and staffFoundCount == 0 then
+                Library:Notification("Staff", "Aucun staff détecté", 5)
             end
+            continue 
         end
+        
+        task.spawn(function()
+            local success, inGroup = pcall(function() return p:IsInGroup(groupId) end)
+            if success and inGroup then
+                knownStaff[p.UserId] = true
+                staffFoundCount = staffFoundCount + 1
+                Library:Notification("Staff détecté", p.Name .. " est dans le serveur.", 8)
+                pcall(refreshStaffList)
+                if autoKickEnabled then
+                    lp:Kick("Auto-kick : Un staff est dans la game.")
+                end
+            end
+            
+            checkedCount = checkedCount + 1
+            if checkedCount == #playersToCheck and staffFoundCount == 0 then
+                Library:Notification("Staff", "Aucun staff détecté", 5)
+            end
+        end)
     end
     
-    if not staffFound then
+    if #playersToCheck <= 1 then
         Library:Notification("Staff", "Aucun staff détecté", 5)
     end
 end)
 
+local knownStaff = {}
 game:GetService("Players").PlayerAdded:Connect(function(p)
-    if p:IsInGroup(groupId) then
-        if autoKickEnabled and p ~= lp then
-            lp:Kick("Auto-kick : Le staff " .. p.Name .. " a rejoint la game.")
+    if p == lp then return end
+    task.spawn(function()
+        local isStaff = false
+        for i = 1, 5 do
+            local ok, result = pcall(function() return p:IsInGroup(groupId) end)
+            if ok then
+                isStaff = result
+                break
+            end
+            task.wait(0.5)
+        end
+        if isStaff then
+            knownStaff[p.UserId] = true
+            if autoKickEnabled then
+                lp:Kick("Auto-kick : Le staff " .. p.Name .. " a rejoint la game.")
+            else
+                Library:Notification("Alerte Staff", "Le staff " .. p.Name .. " vient de se connecter.", 10)
+            end
+            pcall(refreshStaffList)
+        end
+    end)
+end)
+
+game:GetService("Players").PlayerRemoving:Connect(function(p)
+     if knownStaff[p.UserId] then
+         knownStaff[p.UserId] = nil
+         Library:Notification("Alerte Staff", "Le staff " .. p.Name .. " a quitté le serveur.", 10)
+         refreshStaffList()
+     end
+end)
+
+-- Staff Player List (Side 2)
+StaffListSection = UtilAimSubPage:Section({Name = "Staff List", Side = 2})
+
+staffListNames = {}
+selectedStaffName = nil
+staffSpectating = false
+staffInspectorOpen = false
+
+-- Staff Inspector UI (reuse same style as SilentAimInspector)
+staffInspUI = {}
+staffInspUI.sc = Instance.new("ScreenGui")
+staffInspUI.sc.Name = "StaffInspector_Modern"
+staffInspUI.sc.ResetOnSpawn = false
+staffInspUI.sc.Parent = game:GetService("CoreGui")
+
+staffInspUI.main = Instance.new("Frame")
+staffInspUI.main.Size = UDim2.new(0, 250, 0, 300)
+staffInspUI.main.Position = UDim2.new(1, -270, 0.5, -150)
+staffInspUI.main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+staffInspUI.main.BorderSizePixel = 0
+staffInspUI.main.Visible = false
+staffInspUI.main.Parent = staffInspUI.sc
+
+Instance.new("UICorner", staffInspUI.main).CornerRadius = UDim.new(0, 8)
+
+staffInspUI.st = Instance.new("UIStroke", staffInspUI.main)
+staffInspUI.st.Color = Color3.fromRGB(152, 235, 96)
+staffInspUI.st.Thickness = 2
+
+staffInspUI.content = Instance.new("Frame")
+staffInspUI.content.Size = UDim2.new(1, -20, 1, -20)
+staffInspUI.content.Position = UDim2.new(0, 10, 0, 10)
+staffInspUI.content.BackgroundTransparency = 1
+staffInspUI.content.Parent = staffInspUI.main
+
+staffInspUI.avatarFrame = Instance.new("Frame")
+staffInspUI.avatarFrame.Size = UDim2.new(0, 60, 0, 60)
+staffInspUI.avatarFrame.Position = UDim2.new(0, 0, 0, 0)
+staffInspUI.avatarFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+staffInspUI.avatarFrame.BorderSizePixel = 0
+staffInspUI.avatarFrame.Parent = staffInspUI.content
+Instance.new("UICorner", staffInspUI.avatarFrame).CornerRadius = UDim.new(0, 6)
+
+staffInspUI.avatarImg = Instance.new("ImageLabel")
+staffInspUI.avatarImg.Size = UDim2.new(1, 0, 1, 0)
+staffInspUI.avatarImg.BackgroundTransparency = 1
+staffInspUI.avatarImg.Parent = staffInspUI.avatarFrame
+Instance.new("UICorner", staffInspUI.avatarImg).CornerRadius = UDim.new(0, 6)
+
+staffInspUI.playerName = Instance.new("TextLabel")
+staffInspUI.playerName.Size = UDim2.new(0, 160, 0, 30)
+staffInspUI.playerName.Position = UDim2.new(0, 70, 0, 0)
+staffInspUI.playerName.BackgroundTransparency = 1
+staffInspUI.playerName.Font = Enum.Font.GothamBold
+staffInspUI.playerName.TextColor3 = Color3.fromRGB(255, 255, 255)
+staffInspUI.playerName.TextSize = 16
+staffInspUI.playerName.TextXAlignment = Enum.TextXAlignment.Left
+staffInspUI.playerName.Text = "Staff"
+staffInspUI.playerName.Parent = staffInspUI.content
+
+staffInspUI.hpLabel = Instance.new("TextLabel")
+staffInspUI.hpLabel.Size = UDim2.new(0, 160, 0, 20)
+staffInspUI.hpLabel.Position = UDim2.new(0, 70, 0, 35)
+staffInspUI.hpLabel.BackgroundTransparency = 1
+staffInspUI.hpLabel.Font = Enum.Font.Gotham
+staffInspUI.hpLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+staffInspUI.hpLabel.TextSize = 14
+staffInspUI.hpLabel.TextXAlignment = Enum.TextXAlignment.Left
+staffInspUI.hpLabel.Text = "HP: ?/?"
+staffInspUI.hpLabel.Parent = staffInspUI.content
+
+staffInspUI.statusLabel = Instance.new("TextLabel")
+staffInspUI.statusLabel.Size = UDim2.new(0, 160, 0, 20)
+staffInspUI.statusLabel.Position = UDim2.new(0, 70, 0, 55)
+staffInspUI.statusLabel.BackgroundTransparency = 1
+staffInspUI.statusLabel.Font = Enum.Font.Gotham
+staffInspUI.statusLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
+staffInspUI.statusLabel.TextSize = 12
+staffInspUI.statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+staffInspUI.statusLabel.Text = ""
+staffInspUI.statusLabel.Parent = staffInspUI.content
+
+staffInspUI.separator = Instance.new("Frame")
+staffInspUI.separator.Size = UDim2.new(1, 0, 0, 1)
+staffInspUI.separator.Position = UDim2.new(0, 0, 0, 80)
+staffInspUI.separator.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+staffInspUI.separator.BorderSizePixel = 0
+staffInspUI.separator.Parent = staffInspUI.content
+
+staffInspUI.invHeader = Instance.new("TextLabel")
+staffInspUI.invHeader.Size = UDim2.new(1, 0, 0, 20)
+staffInspUI.invHeader.Position = UDim2.new(0, 0, 0, 90)
+staffInspUI.invHeader.BackgroundTransparency = 1
+staffInspUI.invHeader.Font = Enum.Font.GothamBold
+staffInspUI.invHeader.TextColor3 = Color3.fromRGB(180, 180, 180)
+staffInspUI.invHeader.TextSize = 12
+staffInspUI.invHeader.TextXAlignment = Enum.TextXAlignment.Left
+staffInspUI.invHeader.Text = "INVENTAIRE"
+staffInspUI.invHeader.Parent = staffInspUI.content
+
+staffInspUI.invScroll = Instance.new("ScrollingFrame")
+staffInspUI.invScroll.Size = UDim2.new(1, 0, 0, 160)
+staffInspUI.invScroll.Position = UDim2.new(0, 0, 0, 115)
+staffInspUI.invScroll.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+staffInspUI.invScroll.BorderSizePixel = 0
+staffInspUI.invScroll.ScrollBarThickness = 4
+staffInspUI.invScroll.ScrollBarImageColor3 = Color3.fromRGB(152, 235, 96)
+staffInspUI.invScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+staffInspUI.invScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+staffInspUI.invScroll.Parent = staffInspUI.content
+Instance.new("UICorner", staffInspUI.invScroll).CornerRadius = UDim.new(0, 6)
+
+staffInspUI.invLayout = Instance.new("UIListLayout")
+staffInspUI.invLayout.Padding = UDim.new(0, 5)
+staffInspUI.invLayout.Parent = staffInspUI.invScroll
+
+function createStaffItemFrame(itemName, isEquipped)
+    local item = Instance.new("Frame")
+    item.Size = UDim2.new(1, -10, 0, 30)
+    item.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    item.BorderSizePixel = 0
+    Instance.new("UICorner", item).CornerRadius = UDim.new(0, 4)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -55, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 11
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Text = itemName
+    label.Parent = item
+    if isEquipped then
+        local eq = Instance.new("TextLabel")
+        eq.Size = UDim2.new(0, 45, 0, 14)
+        eq.Position = UDim2.new(1, -50, 0, 8)
+        eq.BackgroundColor3 = Color3.fromRGB(50, 120, 50)
+        eq.Font = Enum.Font.GothamBold
+        eq.TextColor3 = Color3.fromRGB(255, 255, 255)
+        eq.TextSize = 9
+        eq.Text = "ÉQUIPÉ"
+        eq.Parent = item
+        Instance.new("UICorner", eq).CornerRadius = UDim.new(0, 3)
+    end
+    return item
+end
+
+function updateStaffInspector(targetPlayer)
+    if not targetPlayer then staffInspUI.main.Visible = false return end
+    staffInspUI.playerName.Text = targetPlayer.Name
+    pcall(function()
+        staffInspUI.avatarImg.Image = Players:GetUserThumbnailAsync(targetPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+    end)
+    local char = targetPlayer.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            staffInspUI.hpLabel.Text = "HP: " .. math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth)
         else
-            Library:Notification("Alerte Staff", "Le staff " .. p.Name .. " vient de se connecter.", 10)
+            staffInspUI.hpLabel.Text = "HP: ?/?"
+        end
+        staffInspUI.statusLabel.Text = "Dans le serveur"
+        staffInspUI.statusLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+    else
+        staffInspUI.hpLabel.Text = "HP: N/A"
+        staffInspUI.statusLabel.Text = "Pas de personnage"
+        staffInspUI.statusLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
+    end
+    for _, child in pairs(staffInspUI.invScroll:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+    local hasItems = false
+    local backpack = targetPlayer:FindFirstChild("Backpack")
+    if backpack then
+        for _, item in pairs(backpack:GetChildren()) do
+            if item:IsA("Tool") then
+                createStaffItemFrame(item.Name, false).Parent = staffInspUI.invScroll
+                hasItems = true
+            end
+        end
+    end
+    if char then
+        for _, item in pairs(char:GetChildren()) do
+            if item:IsA("Tool") then
+                createStaffItemFrame(item.Name, true).Parent = staffInspUI.invScroll
+                hasItems = true
+            end
+        end
+    end
+    if not hasItems then
+        createStaffItemFrame("Inventaire vide", false).Parent = staffInspUI.invScroll
+    end
+    staffInspUI.main.Visible = true
+end
+
+-- Staff List Dropdown
+staffDropdownRef = nil
+
+function getStaffNames()
+    local names = {}
+    for userId, _ in pairs(knownStaff) do
+        local p = Players:GetPlayerByUserId(userId)
+        if p then
+            table.insert(names, p.Name)
+        end
+    end
+    return names
+end
+
+function refreshStaffList()
+    if staffDropdownRef then
+        pcall(function()
+            staffDropdownRef:SetItems(getStaffNames())
+        end)
+    end
+end
+
+staffDropdownRef = StaffListSection:Dropdown({
+    Name = "Staff Détectés",
+    Flag = "StaffList_Dropdown",
+    Default = "",
+    Multi = false,
+    Items = getStaffNames(),
+    Callback = function(v)
+        selectedStaffName = v
+    end
+})
+
+StaffListSection:Button():Add("Refresh Liste", function()
+    refreshStaffList()
+    Library:Notification("Staff List", "Liste rafraîchie", 3)
+end)
+
+StaffListSection:Button():Add("Spectate Staff", function()
+    if not selectedStaffName then Library:Notification("Staff", "Aucun staff sélectionné", 3) return end
+    local target = Players:FindFirstChild(selectedStaffName)
+    if not target or not target.Character or not target.Character:FindFirstChild("Humanoid") then
+        Library:Notification("Staff", "Joueur introuvable ou sans personnage", 3)
+        return
+    end
+    staffSpectating = true
+    workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
+    Library:Notification("Staff", "Spectate de " .. selectedStaffName, 5)
+end)
+
+StaffListSection:Button():Add("TP vers Staff", function()
+    if not selectedStaffName then Library:Notification("Staff", "Aucun staff sélectionné", 3) return end
+    local target = Players:FindFirstChild(selectedStaffName)
+    if not target or not target.Character or not target.Character:FindFirstChild("Torso") then
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            lp.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+            Library:Notification("Staff", "Téléporté vers " .. selectedStaffName, 5)
+        else
+            Library:Notification("Staff", "Joueur introuvable ou sans personnage", 3)
+        end
+        return
+    end
+    lp.Character.HumanoidRootPart.CFrame = target.Character.Torso.CFrame
+    Library:Notification("Staff", "Téléporté vers " .. selectedStaffName, 5)
+end)
+
+StaffListSection:Button():Add("Inspector Staff", function()
+    if not selectedStaffName then Library:Notification("Staff", "Aucun staff sélectionné", 3) return end
+    local target = Players:FindFirstChild(selectedStaffName)
+    if not target then Library:Notification("Staff", "Joueur introuvable", 3) return end
+    staffInspectorOpen = true
+    updateStaffInspector(target)
+    Library:Notification("Staff", "Inspector ouvert pour " .. selectedStaffName, 5)
+end)
+
+StaffListSection:Button():Add("Stop", function()
+    if staffSpectating then
+        staffSpectating = false
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            workspace.CurrentCamera.CameraSubject = lp.Character.Humanoid
+        end
+        Library:Notification("Staff", "Spectate arrêté", 3)
+    end
+    if staffInspectorOpen then
+        staffInspectorOpen = false
+        staffInspUI.main.Visible = false
+        Library:Notification("Staff", "Inspector fermé", 3)
+    end
+end)
+
+-- Auto-refresh inspector if open
+task.spawn(function()
+    while task.wait(0.5) do
+        if staffInspectorOpen and selectedStaffName then
+            local target = Players:FindFirstChild(selectedStaffName)
+            if target then
+                updateStaffInspector(target)
+            else
+                staffInspUI.main.Visible = false
+                staffInspectorOpen = false
+            end
         end
     end
 end)
 
-local UtilAimSubPage = UtilPage:SubPage({Name = "Exploit", Columns = 2}) 
-local ExploitSection = UtilAimSubPage:Section({Name = "Exploit", Side = 1}) 
+UtilAimSubPage = UtilPage:SubPage({Name = "Exploit", Columns = 2}) 
+ExploitSection = UtilAimSubPage:Section({Name = "Exploit", Side = 1}) 
 
 ExploitSection:Button():Add("Give Armor", function()
     local player = game.Players.LocalPlayer
@@ -8237,6 +8874,44 @@ ExploitSection:Button():Add("Give Armor", function()
             v.Value = 99e99 
         end
     end
+end)
+
+ExploitSection:Button():Add("TP Unanchored (TPUA)", function()
+    local player = game.Players.LocalPlayer
+    if not player.Character or not player.Character:FindFirstChild("Head") then
+        Library:Notification("TPUA", "Pas de personnage", 3)
+        return
+    end
+    local excludedNames = {Torso = true, Head = true, ["Right Arm"] = true, ["Left Arm"] = true, ["Right Leg"] = true, ["Left Leg"] = true, HumanoidRootPart = true}
+    local Forces = {}
+    local count = 0
+    for _, part in ipairs(workspace:GetDescendants()) do
+        pcall(function()
+            if (part:IsA("BasePart") or part:IsA("UnionOperation")) and not part.Anchored and not part:IsDescendantOf(player.Character) and not excludedNames[part.Name] then
+                local isPlayerPart = false
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr.Character and part:IsDescendantOf(plr.Character) then
+                        isPlayerPart = true
+                        break
+                    end
+                end
+                if not isPlayerPart then
+                    for _, c in pairs(part:GetChildren()) do
+                        if c:IsA("BodyPosition") or c:IsA("BodyGyro") then
+                            c:Destroy()
+                        end
+                    end
+                    local bp = Instance.new("BodyPosition")
+                    bp.Parent = part
+                    bp.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                    bp.Position = player.Character.Head.Position
+                    table.insert(Forces, bp)
+                    count = count + 1
+                end
+            end
+        end)
+    end
+    Library:Notification("TPUA", count .. " parts attir\195\169es vers toi", 5)
 end)
 
 ExploitSection:Button():Add("Give Helmet", function()
@@ -8443,19 +9118,6 @@ end)
 
 
         
-    
-			        ExploitSection:Button():Add("God Mode", function()
-
-    game:GetService('ReplicatedStorage')["ACS_Engine"].Eventos.Damage:FireServer(game.Players.LocalPlayer.Character.Humanoid, tonumber("nan"), 0, 0)
-
-
-            Library:Notification(
-            "God Mode",
-            " Enabled",
-            3
-        )
-
-			        end)
 
 
 
@@ -8688,7 +9350,7 @@ ExploitSection:Toggle({
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ddqdddffgfrhgggggggggfgggggggggh/fhfgjghjjkkkkkkkkhgg/refs/heads/main/sdfddfhgyyyftgfdddd"))()
 
-local DesyncSection = UtilAimSubPage:Section({Name = "DeSync", Side = 2})
+DesyncSection = UtilAimSubPage:Section({Name = "DeSync", Side = 2})
 
 DesyncSection:Toggle({
     Name = "DeSync",
@@ -8700,6 +9362,20 @@ DesyncSection:Toggle({
             Library:Notification("DeSync ON", "DeSync Enabled", 8)
         else
             _G.FreecamCore.Disable()
+        end
+    end
+}):Keybind({
+    Flag = "DeSync_Keybind",
+    Default = Enum.KeyCode.V,
+    Mode = "Toggle",
+    Callback = function(v)
+        Library.Flags["udddd"] = v
+        if v then
+            pcall(function() _G.FreecamCore.Enable() end)
+            Library:Notification("DeSync ON", "DeSync Enabled", 3)
+        else
+            pcall(function() _G.FreecamCore.Disable() end)
+            Library:Notification("DeSync OFF", "DeSync Disabled", 3)
         end
     end
 })
@@ -8732,9 +9408,9 @@ DesyncSection:Slider({
 
 
 
-        local GunSubPage = GunPage:SubPage({Name = "Gun Mods", Columns = 2}) 
+        GunSubPage = GunPage:SubPage({Name = "Gun Mods", Columns = 2}) 
 
-        local GunSection = GunSubPage:Section({Name = "Gun Mods UD", Side = 1}) 
+        GunSection = GunSubPage:Section({Name = "Gun Mods UD", Side = 1}) 
 
 
 
@@ -8952,7 +9628,7 @@ end})
 GunSection:Toggle({Name = "Rapid Fire", Flag = "RapidFire", Default = false, Callback = function(v) toggles.rapidFire = v end})
 GunSection:Toggle({Name = "Fire Rate Inf", Flag = "FireRateInf", Default = false, Callback = function(v) toggles.fireRateInf = v end})
 
-local Button = GunSection:Button()
+Button = GunSection:Button()
 Button:Add("Apply Modif", applyWeaponSettings)
 Button:Add("Reset Modif", function()
     settings = {degats = 20, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1}
@@ -8960,14 +9636,31 @@ Button:Add("Reset Modif", function()
     Library:Notification("Reset", "Modifications réinitialisées", 3)
 end)
 
-local GunnSection = GunSubPage:Section({Name = "GunList", Side = 2}) 
+GunnSection = GunSubPage:Section({Name = "GunList", Side = 2}) 
+
+local function getGunNamesForMods()
+    local names = {}
+    local gunsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("ACS_Engine")
+    if gunsFolder then
+        local gunModels = gunsFolder:FindFirstChild("GunModels")
+        if gunModels then
+            local clientFolder = gunModels:FindFirstChild("Client")
+            if clientFolder then
+                for _, gun in ipairs(clientFolder:GetChildren()) do
+                    table.insert(names, gun.Name)
+                end
+            end
+        end
+    end
+    return names
+end
 
 GunnSection:Searchbox({
     Name = "Sélectionner une Arme",
     Flag = "Arme_Searchbox",
-    Items = {"USP", "G17", "AKS74U", "AKMSN", "MP9", "G19", "G17 [F]", "AR-15", "HK416 Mod", "G36C", "TaserX26", "IA2 MOD", "M9", "MP5", "M40A5"},
+    Items = getGunNamesForMods(),
     Multi = false,
-    Default = "G17",
+    Default = nil,
     Callback = function(Value)
         armeSelectionnee = Value
     end
@@ -8977,9 +9670,9 @@ GunnSection:Searchbox({
 
 
 
-        local SkinSubPage = SkinPage:SubPage({Name = "Skin ＆ Local", Columns = 2}) 
+        SkinSubPage = SkinPage:SubPage({Name = "Skin ＆ Local", Columns = 2}) 
 
-        local SkinSection = SkinSubPage:Section({Name = "Gun Skin", Side = 1}) 
+        SkinSection = SkinSubPage:Section({Name = "Gun Skin", Side = 1}) 
 
 
 
@@ -9073,7 +9766,7 @@ local GunSearchbox = SkinSection:Searchbox({
 })
 
 
-        local Skin2Section = SkinSubPage:Section({Name = "Gun Skin", Side = 2}) 
+        Skin2Section = SkinSubPage:Section({Name = "Gun Skin", Side = 2}) 
 
 
 Skin2Section:Dropdown({
@@ -9092,7 +9785,7 @@ Skin2Section:Dropdown({
 })
 
 
-local GunCustomizerToggle = Skin2Section:Toggle({
+GunCustomizerToggle = Skin2Section:Toggle({
     Name = "Gun Customizer",
     Flag = "GunCustomizer_Enabled",
     Default = false,
@@ -9122,7 +9815,7 @@ GunCustomizerToggle:Colorpicker({
 })
 
 
-        local SkinnSection = SkinSubPage:Section({Name = "Local", Side = 2}) 
+        SkinnSection = SkinSubPage:Section({Name = "Local", Side = 2}) 
  
 
 local lighting = game:GetService("Lighting")
@@ -9161,7 +9854,7 @@ end
 
 
 
-local ambientToggle = SkinnSection:Toggle({
+ambientToggle = SkinnSection:Toggle({
     Name = "Ambient",
     Flag = "Ambient_Enabled",
     Default = false,
@@ -9240,7 +9933,7 @@ local function stopChamsLoop()
     end
 end
 
-local ChamsToggle = SkinnSection:Toggle({
+ChamsToggle = SkinnSection:Toggle({
     Name = "Chams Local",
     Flag = "ToggleSimpleChams",
     Default = false,
@@ -9295,9 +9988,9 @@ end)
 
 
         
-        local SkinSubPage = SkinPage:SubPage({Name = "Tracer", Columns = 2}) 
+        SkinSubPage = SkinPage:SubPage({Name = "Tracer", Columns = 2}) 
 
-        local Skin2Section = SkinSubPage:Section({Name = "Bullet Tracer", Side = 1}) 
+        Skin2Section = SkinSubPage:Section({Name = "Bullet Tracer", Side = 1}) 
 
 
 
@@ -9391,7 +10084,7 @@ end)
 setreadonly(mt, true)
 
 
-local t = Skin2Section:Toggle({
+t = Skin2Section:Toggle({
     Name = "Bullet Tracer",
     Flag = "BulletTracer_Enabled",
     Default = false,
@@ -9449,9 +10142,9 @@ Skin2Section:Slider({
 
 
 
-        local TpSubPage = TpPage:SubPage({Name = "Téléporation", Columns = 2}) 
+        TpSubPage = TpPage:SubPage({Name = "Téléporation", Columns = 2}) 
 
-        local TpSection = TpSubPage:Section({Name = "TP", Side = 1}) 
+        TpSection = TpSubPage:Section({Name = "TP", Side = 1}) 
 
 
 
