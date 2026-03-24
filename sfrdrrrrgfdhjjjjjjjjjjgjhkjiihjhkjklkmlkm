@@ -8478,6 +8478,7 @@ local groupId = 10944938
 local lp = game:GetService("Players").LocalPlayer
 
 local autoKickEnabled = false
+local knownStaff = {}
 
 StaffSection:Toggle({
     Name = "Auto-Kick Staff",
@@ -8526,7 +8527,6 @@ StaffSection:Button():Add("Vérifier Staff", function()
     end
 end)
 
-local knownStaff = {}
 game:GetService("Players").PlayerAdded:Connect(function(p)
     if p == lp then return end
     task.spawn(function()
