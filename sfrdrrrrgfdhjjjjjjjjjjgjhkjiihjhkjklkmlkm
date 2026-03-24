@@ -8504,6 +8504,7 @@ StaffSection:Button():Add("Vérifier Staff", function()
         end
         
         task.spawn(function()
+            if not knownStaff then knownStaff = {} end
             local success, inGroup = pcall(function() return p:IsInGroup(groupId) end)
             if success and inGroup then
                 knownStaff[p.UserId] = true
@@ -8771,7 +8772,7 @@ end
 function refreshStaffList()
     if staffDropdownRef then
         pcall(function()
-            staffDropdownRef:SetItems(getStaffNames())
+            staffDropdownRef:Refresh(getStaffNames(), true)
         end)
     end
 end
