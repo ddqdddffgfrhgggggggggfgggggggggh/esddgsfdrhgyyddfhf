@@ -6745,8 +6745,11 @@ local Config = {
     Wallbang = false,
     ShowTargetText = false,
     Snapline = false,
-    DebugWallbang = false
+    DebugWallbang = false,
+    IgnoreStaff = false
 }
+
+_G.knownStaff = _G.knownStaff or {}
 
 _G.NearestEnemyHead = nil
 _G.TargetedPlayer = nil
@@ -6857,22 +6860,19 @@ local function IsActuallyVisible(targetPart)
     local origin = camera.CFrame.Position
     local direction = (targetPart.Position - origin).Unit * 500
     local rayParams = RaycastParams.new()
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, camera}
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, camera, targetPart.Parent}
     rayParams.FilterType = Enum.RaycastFilterType.Exclude
     rayParams.IgnoreWater = true
     
     local result = workspace:Raycast(origin, direction, rayParams)
     
     if result and result.Instance then
-        if result.Instance:IsDescendantOf(targetPart.Parent) then
-            return true
-        end
-        if result.Instance.Transparency >= 1 or not result.Instance.CanCollide then
-            return true 
+        if result.Instance.Transparency < 1 and result.Instance.CanCollide then
+            return false
         end
     end
     
-    return not result
+    return true
 end
 
 task.spawn(function()
@@ -6883,6 +6883,7 @@ task.spawn(function()
             
             for _, player in pairs(Players:GetPlayers()) do
                 if player ~= LocalPlayer and player.Character then
+                    if Config.IgnoreStaff and _G.knownStaff and _G.knownStaff[player.UserId] then continue end
                     if Config.TeamCheck then
                         if player.Team == LocalPlayer.Team then continue end
                         local myTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
@@ -7011,6 +7012,29 @@ fovCircleToggle:Colorpicker({
 })
 
 SilentAimSection:Toggle({
+    Name = "Snapline",
+    Flag = "SilentAimSnapline",
+    Default = false,
+    Callback = function(v)
+        Config.Snapline = v
+        if not v then
+            SnaplineOut.Visible = false
+        end
+    end
+}):Colorpicker({
+    Name = "Snapline Color",
+    Flag = "SnaplineColor",
+    Default = Color3.fromRGB(255, 255, 255),
+    Alpha = 0,
+    Callback = function(v)
+        SnaplineOut.Color = v
+    end
+})
+
+
+
+
+SilentAimSection:Toggle({
     Name = "Wall Check",
     Flag = "WallCheck",
     Default = false,
@@ -7049,17 +7073,6 @@ SilentAimSection:Toggle({
     end
 })
 
-SilentAimSection:Toggle({
-    Name = "Snapline",
-    Flag = "SilentAimSnapline",
-    Default = false,
-    Callback = function(v)
-        Config.Snapline = v
-        if not v then
-            SnaplineOut.Visible = false
-        end
-    end
-})
 
 SilentAimSection:Toggle({
     Name = "Show Debug Wallbang",
@@ -7070,6 +7083,15 @@ SilentAimSection:Toggle({
         if not v then
             DebugWBText.Visible = false
         end
+    end
+})
+
+SilentAimSection:Toggle({
+    Name = "Ignore Staff",
+    Flag = "SilentAimIgnoreStaff",
+    Default = false,
+    Callback = function(v)
+        Config.IgnoreStaff = v
     end
 })
 
@@ -7608,11 +7630,11 @@ local function ESP(plr)
                 local head = plr.Character:FindFirstChild("Head")
                 if not head then for _, v in pairs(library) do v.Visible = false end return end
 
-                local headPos   = Camera:WorldToViewportPoint(head.Position)
-                local DistanceY = math.clamp(
-                    (Vector2.new(headPos.X, headPos.Y) - Vector2.new(HumPos.X, HumPos.Y)).magnitude,
-                    2, math.huge
-                )
+                local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
+                local legPos = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position - Vector3.new(0, 3, 0))
+                
+                local sizeY = math.abs(headPos.Y - legPos.Y)
+                local DistanceY = sizeY / 2
 
                 if ESP_Settings.Box then
                     local bs = Vector2.new(DistanceY * 2, DistanceY * 4)
@@ -7624,7 +7646,7 @@ local function ESP(plr)
 
                 if ESP_Settings.Tracer then
                     local fp = Settings.Tracer_Origin == "Bottom"
-                        and Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y)
+                        and Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y - 80)
                         or  Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y * 0.5)
                     library.tracer.From      = fp
                     library.tracer.To        = Vector2.new(HumPos.X, HumPos.Y + DistanceY * 2)
@@ -7942,6 +7964,10 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 
+local normalFOV = 70
+local zoomFOVAmount = 20
+local fovZoomHeld = false
+
 AntiiiSection:Toggle({
     Name = "Zoom FOV (Maintien T)",
     Flag = "ZoomFOV_Enabled",
@@ -7949,6 +7975,8 @@ AntiiiSection:Toggle({
     Callback = function(v)
         if not v then
             fovZoomHeld = false
+            local ts = game:GetService("TweenService")
+            ts:Create(workspace.CurrentCamera, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {FieldOfView = normalFOV}):Play()
         end
     end
 }):Keybind({
@@ -7958,10 +7986,44 @@ AntiiiSection:Toggle({
     Callback = function(held)
         if not Library.Flags["ZoomFOV_Enabled"] then return end
         fovZoomHeld = held
+        
+        local targetFOV = held and zoomFOVAmount or normalFOV
+        local ts = game:GetService("TweenService")
+        ts:Create(workspace.CurrentCamera, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {FieldOfView = targetFOV}):Play()
     end
 })
 
+local alwaysRunning = false
+local alwaysRunConn = nil
 
+AntiiiSection:Toggle({
+    Name = "Always Run",
+    Flag = "AlwaysRun_Enabled",
+    Default = false,
+    Callback = function(v)
+        alwaysRunning = v
+        if v then
+            if alwaysRunConn then alwaysRunConn:Disconnect() end
+            alwaysRunConn = RunService.RenderStepped:Connect(function()
+                if alwaysRunning then
+                    pcall(function()
+                        local vim = game:GetService("VirtualInputManager")
+                        vim:SendKeyEvent(true, Enum.KeyCode.LeftShift, false, game)
+                    end)
+                end
+            end)
+        else
+            if alwaysRunConn then
+                alwaysRunConn:Disconnect()
+                alwaysRunConn = nil
+            end
+            pcall(function()
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(false, Enum.KeyCode.LeftShift, false, game)
+            end)
+        end
+    end
+})
 
 AntiiiSection:Slider({
     Name = "WalkSpeed",
@@ -7979,43 +8041,20 @@ AntiiiSection:Slider({
     end
 })
 
+local spinSpeed = 16
 
-
-
-
-                AntiiiSection:Slider({
-                    Name = "Spinbot Speed",
-                    Flag = "Spinbot_Speed",
-                    Min = 0,
-                    Suffix = "px",
-                    Max = 200,
-                    Default = 16,
-                    Decimals = 1,
-                    Callback = function(v)
+AntiiiSection:Slider({
+    Name = "Spinbot Speed",
+    Flag = "Spinbot_Speed",
+    Min = 0,
+    Suffix = "px",
+    Max = 200,
+    Default = 16,
+    Decimals = 1,
+    Callback = function(v)
         spinSpeed = v
-                    end
-                })
-
-
-
-local normalFOV = 70
-local zoomFOVAmount = 20
-local fovZoomHeld = false
-local fovLoop = nil
-
-local function updateFOVLoop()
-    if fovLoop then return end
-    fovLoop = game:GetService("RunService").RenderStepped:Connect(function()
-        if workspace.CurrentCamera then
-            if fovZoomHeld then
-                workspace.CurrentCamera.FieldOfView = zoomFOVAmount
-            else
-                workspace.CurrentCamera.FieldOfView = normalFOV
-            end
-        end
-    end)
-end
-updateFOVLoop()
+    end
+})
 
 AntiiiSection:Slider({
     Name = "Change FOV",
@@ -8027,6 +8066,9 @@ AntiiiSection:Slider({
     Decimals = 1,
     Callback = function(v)
         normalFOV = v
+        if not fovZoomHeld then
+            workspace.CurrentCamera.FieldOfView = normalFOV
+        end
     end
 })
 
@@ -8478,7 +8520,7 @@ local groupId = 10944938
 local lp = game:GetService("Players").LocalPlayer
 
 local autoKickEnabled = false
-local knownStaff = {}
+local knownStaff = _G.knownStaff
 
 StaffSection:Toggle({
     Name = "Auto-Kick Staff",
@@ -9367,7 +9409,7 @@ DesyncSection:Toggle({
     end
 }):Keybind({
     Flag = "DeSync_Keybind",
-    Default = Enum.KeyCode.V,
+    Default = Enum.KeyCode.P,
     Mode = "Toggle",
     Callback = function(v)
         Library.Flags["udddd"] = v
@@ -9392,7 +9434,7 @@ DesyncSection:Slider({
 DesyncSection:Slider({
     Name = "Look Sensitivity",
     Flag = "DeSync_Sens",
-    Min = 0.2, Max = 5.0, Default = 2,
+    Min = 0.2, Max = 5.0, Default = 0.2,
     Decimals = 0.1, Suffix = "x",
     Callback = function(v) _G.FreecamCore.SetSens(v) end
 })
