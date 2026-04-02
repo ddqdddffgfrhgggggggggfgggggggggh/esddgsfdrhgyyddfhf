@@ -8025,6 +8025,42 @@ AntiiiSection:Toggle({
     end
 })
 
+local loopWalkSpeed = false
+local loopWSConn = nil
+local currentWSVal = 16
+
+AntiiiSection:Toggle({
+    Name = "Toggle WalkSpeed",
+    Flag = "WalkSpeed_Toggle",
+    Default = false,
+    Callback = function(state)
+        loopWalkSpeed = state
+        local lplr = Players.LocalPlayer
+        if state then
+            if loopWSConn then loopWSConn:Disconnect() end
+            loopWSConn = RunService.RenderStepped:Connect(function()
+                if loopWalkSpeed and lplr.Character then
+                    local hum = lplr.Character:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        hum.WalkSpeed = currentWSVal
+                    end
+                end
+            end)
+        else
+            if loopWSConn then
+                loopWSConn:Disconnect()
+                loopWSConn = nil
+            end
+            if lplr.Character then
+                local hum = lplr.Character:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum.WalkSpeed = 16
+                end
+            end
+        end
+    end
+})
+
 AntiiiSection:Slider({
     Name = "WalkSpeed",
     Flag = "AntiAimAmountX",
@@ -8034,6 +8070,7 @@ AntiiiSection:Slider({
     Default = 16,
     Decimals = 1,
     Callback = function(v)
+        currentWSVal = v
         local lplr = Players.LocalPlayer
         if lplr.Character and lplr.Character:FindFirstChildOfClass("Humanoid") then
             lplr.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = v
@@ -8741,7 +8778,7 @@ function createStaffItemFrame(itemName, isEquipped)
         eq.BackgroundColor3 = Color3.fromRGB(50, 120, 50)
         eq.Font = Enum.Font.GothamBold
         eq.TextColor3 = Color3.fromRGB(255, 255, 255)
-        eq.TextSize = 9
+        eq.TextSize = 10
         eq.Text = "ÉQUIPÉ"
         eq.Parent = item
         Instance.new("UICorner", eq).CornerRadius = UDim.new(0, 3)
@@ -9365,7 +9402,13 @@ ExploitSection:Toggle({
     end
 })
 
-local config = require(game:GetService("ReplicatedStorage").ACS_Engine.ServerConfigs.Config)
+local config = {}
+local success, result = pcall(function()
+    return require(game:GetService("ReplicatedStorage").ACS_Engine.ServerConfigs.Config)
+end)
+if success then
+    config = result
+end
 
 ExploitSection:Toggle({
     Name = "BunnyHop",
@@ -10016,11 +10059,156 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 
-SkinnSection:Button():Add("CrossHair", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/e1998a/cursort/refs/heads/main/qsqzqfsqqfsss"))()
+local crosshairConnection = nil
+local crosshairDrawings = nil
 
-end)
+SkinnSection:Toggle({
+    Name = "CrossHair",
+    Flag = "ToggleCrossHair",
+    Default = false,
+    Callback = function(v)
+        if v then
+            -- Charger et exécuter le crosshair
+            getgenv().crosshair = {
+                enabled = true,
+                refreshrate = 0,
+                mode = 'mouse',
+                position = Vector2.new(0, 0),
 
+                width = 1.5,
+                length = 10,
+                radius = 11,
+                color = Color3.fromRGB(111, 228, 49),
+
+                spin = true,
+                spin_speed = 150,
+                spin_max = 340,
+                spin_style = Enum.EasingStyle.Sine,
+
+                resize = true,
+                resize_speed = 150,
+                resize_min = 5,
+                resize_max = 22,
+            }
+
+            local old; old = hookfunction(Drawing.new, function(class, properties)
+                local drawing = old(class)
+                for i, v in next, properties or {} do
+                    drawing[i] = v
+                end
+                return drawing
+            end)
+
+            local runservice = game:GetService('RunService')
+            local inputservice = game:GetService('UserInputService')
+            local tweenservice = game:GetService('TweenService')
+            local camera = workspace.CurrentCamera
+
+            local last_render = 0
+
+            local drawings = {
+                crosshair = {},
+                text = {Drawing.new('Text', {Size = 15, Font = 2, Outline = true, Text = 'neptune', Color = Color3.new(1, 1, 1)}),
+                        Drawing.new('Text', {Size = 15, Font = 2, Outline = true, Text = ".wtf"}),},
+            }
+
+            for idx = 1, 8 do
+                drawings.crosshair[idx] = Drawing.new('Line')
+            end
+
+            function solve(angle, radius)
+                return Vector2.new(
+                    math.sin(math.rad(angle)) * radius,
+                    math.cos(math.rad(angle)) * radius
+                )
+            end
+
+            crosshairConnection = runservice.PostSimulation:Connect(function()
+                local _tick = tick()
+
+                if _tick - last_render > crosshair.refreshrate then
+                    last_render = _tick
+
+                    local position = (
+                        crosshair.mode == 'center' and camera.ViewportSize / 2 or
+                        crosshair.mode == 'mouse' and inputservice:GetMouseLocation() or
+                        crosshair.position
+                    )
+
+                    local text_x = drawings.text[1].TextBounds.X + drawings.text[2].TextBounds.X
+
+                    drawings.text[1].Visible = crosshair.enabled
+                    drawings.text[2].Visible = crosshair.enabled
+
+                    if crosshair.enabled then
+                        drawings.text[1].Position = position + Vector2.new(-text_x / 2, crosshair.radius + (crosshair.resize and crosshair.resize_max or crosshair.length) + 15)
+                        drawings.text[2].Position = drawings.text[1].Position + Vector2.new(drawings.text[1].TextBounds.X)
+                        drawings.text[2].Color = crosshair.color
+                        
+                        for idx = 1, 4 do
+                            local outline = drawings.crosshair[idx]
+                            local inline = drawings.crosshair[idx + 4]
+                
+                            local angle = (idx - 1) * 90
+                            local length = crosshair.length
+                
+                            if crosshair.spin then
+                                local spin_angle = -_tick * crosshair.spin_speed % crosshair.spin_max
+                                angle = angle + tweenservice:GetValue(spin_angle / 360, crosshair.spin_style, Enum.EasingDirection.InOut) * 360
+                            end
+                
+                            if crosshair.resize then
+                                local resize_length = tick() * crosshair.resize_speed % 180
+                                length = crosshair.resize_min + math.sin(math.rad(resize_length)) * crosshair.resize_max
+                            end
+                
+                            inline.Visible = true
+                            inline.Color = crosshair.color
+                            inline.From = position + solve(angle, crosshair.radius)
+                            inline.To = position + solve(angle, crosshair.radius + length)
+                            inline.Thickness = crosshair.width
+                
+                            outline.Visible = true
+                            outline.From = position + solve(angle, crosshair.radius - 1)
+                            outline.To = position + solve(angle, crosshair.radius + length + 1)
+                            outline.Thickness = crosshair.width + 1.5    
+                        end
+                    else
+                        for idx = 1, 8 do
+                            drawings.crosshair[idx].Visible = false
+                        end
+                    end
+                end
+            end)
+
+            crosshairDrawings = drawings
+            
+            -- Cacher la souris Roblox
+            local mouse = game.Players.LocalPlayer:GetMouse()
+            mouse.Icon = ""
+        else
+            -- Désactiver le crosshair
+            if crosshairConnection then
+                crosshairConnection:Disconnect()
+                crosshairConnection = nil
+            end
+            if crosshairDrawings then
+                for idx = 1, 8 do
+                    if crosshairDrawings.crosshair[idx] then
+                        crosshairDrawings.crosshair[idx]:Remove()
+                    end
+                end
+                for idx = 1, 2 do
+                    if crosshairDrawings.text[idx] then
+                        crosshairDrawings.text[idx]:Remove()
+                    end
+                end
+                crosshairDrawings = nil
+            end
+            getgenv().crosshair = nil
+        end
+    end
+})
 
 
 
