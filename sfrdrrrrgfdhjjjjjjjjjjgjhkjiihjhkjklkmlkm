@@ -1,5 +1,377 @@
+--[[
+	LOADER WITH ANTI-CHEAT BYPASS
+	Initialize loader and BrickAntiCheat
+]]
+
+-- ===================== LOADER CONFIGURATION =====================
+local CONFIG = {
+    ContainerWidth = 380,
+    ContainerHeight = 100,
+    BarHeight = 8,
+    BarPaddingX = 32,
+    BarLerpSpeed = 0.4,
+    FadeInSpeed = 0.4,
+    FadeOutSpeed = 0.3,
+}
+
+local loader = {}
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GraphiteLoader"
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.ResetOnSpawn = false
+
+local success = pcall(function()
+    screenGui.Parent = game:GetService("CoreGui")
+end)
+if not success then
+    screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local container = Instance.new("Frame")
+container.Name = "LoaderContainer"
+container.Size = UDim2.new(0, CONFIG.ContainerWidth, 0, CONFIG.ContainerHeight)
+container.Position = UDim2.new(0.5, 0, 0.5, 0)
+container.AnchorPoint = Vector2.new(0.5, 0.5)
+container.BackgroundColor3 = Color3.fromRGB(38, 38, 42)
+container.BorderSizePixel = 0
+container.BackgroundTransparency = 1
+container.Parent = screenGui
+
+local containerCorner = Instance.new("UICorner")
+containerCorner.CornerRadius = UDim.new(0, 12)
+containerCorner.Parent = container
+
+local containerStroke = Instance.new("UIStroke")
+containerStroke.Color = Color3.fromRGB(0, 0, 0)
+containerStroke.Thickness = 1
+containerStroke.Transparency = 1
+containerStroke.Parent = container
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(46, 46, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(38, 38, 42))
+}
+gradient.Rotation = 145
+gradient.Parent = container
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Name = "StatusLabel"
+statusLabel.Size = UDim2.new(1, -CONFIG.BarPaddingX * 2, 0, 20)
+statusLabel.Position = UDim2.new(0, CONFIG.BarPaddingX, 0, 28)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Initializing..."
+statusLabel.TextColor3 = Color3.fromRGB(176, 176, 176)
+statusLabel.TextSize = 14
+statusLabel.Font = Enum.Font.GothamMedium
+statusLabel.TextXAlignment = Enum.TextXAlignment.Center
+statusLabel.TextTransparency = 1
+statusLabel.Parent = container
+
+local barBackground = Instance.new("Frame")
+barBackground.Name = "BarBackground"
+barBackground.Size = UDim2.new(1, -CONFIG.BarPaddingX * 2, 0, CONFIG.BarHeight)
+barBackground.Position = UDim2.new(0, CONFIG.BarPaddingX, 0, 60)
+barBackground.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+barBackground.BorderSizePixel = 0
+barBackground.BackgroundTransparency = 1
+barBackground.Parent = container
+
+local barBgCorner = Instance.new("UICorner")
+barBgCorner.CornerRadius = UDim.new(0, 3)
+barBgCorner.Parent = barBackground
+
+local barFill = Instance.new("Frame")
+barFill.Name = "BarFill"
+barFill.Size = UDim2.new(0, 0, 1, 0)
+barFill.BackgroundColor3 = Color3.fromRGB(106, 106, 106)
+barFill.BorderSizePixel = 0
+barFill.BackgroundTransparency = 1
+barFill.Parent = barBackground
+
+local barFillCorner = Instance.new("UICorner")
+barFillCorner.CornerRadius = UDim.new(0, 3)
+barFillCorner.Parent = barFill
+
+local barGradient = Instance.new("UIGradient")
+barGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 80, 80)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(106, 106, 106))
+}
+barGradient.Rotation = 90
+barGradient.Parent = barFill
+
+local TweenService = game:GetService("TweenService")
+local fadeInTween = TweenService:Create(
+    container,
+    TweenInfo.new(CONFIG.FadeInSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    {BackgroundTransparency = 0}
+)
+local strokeFadeIn = TweenService:Create(
+    containerStroke,
+    TweenInfo.new(CONFIG.FadeInSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    {Transparency = 0}
+)
+local textFadeIn = TweenService:Create(
+    statusLabel,
+    TweenInfo.new(CONFIG.FadeInSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    {TextTransparency = 0}
+)
+local barBgFadeIn = TweenService:Create(
+    barBackground,
+    TweenInfo.new(CONFIG.FadeInSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    {BackgroundTransparency = 0}
+)
+local barFillFadeIn = TweenService:Create(
+    barFill,
+    TweenInfo.new(CONFIG.FadeInSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    {BackgroundTransparency = 0}
+)
+
+fadeInTween:Play();strokeFadeIn:Play();textFadeIn:Play();barBgFadeIn:Play();barFillFadeIn:Play()
+
+function updateLoader(status, progress)
+    progress = math.clamp(progress, 0, 100)
+    statusLabel.Text = status
+    local targetSize = UDim2.new(progress / 100, 0, 1, 0)
+    barFill:TweenSize(
+        targetSize,
+        Enum.EasingDirection.Out,
+        Enum.EasingStyle.Quad,
+        CONFIG.BarLerpSpeed,
+        true
+    )
+end
+
+function loader:Remove()
+    local fadeOutTween = TweenService:Create(
+        container,
+        TweenInfo.new(CONFIG.FadeOutSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {BackgroundTransparency = 1}
+    )
+    local strokeFadeOut = TweenService:Create(
+        containerStroke,
+        TweenInfo.new(CONFIG.FadeOutSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {Transparency = 1}
+    )
+    local textFadeOut = TweenService:Create(
+        statusLabel,
+        TweenInfo.new(CONFIG.FadeOutSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {TextTransparency = 1}
+    )
+    local barBgFadeOut = TweenService:Create(
+        barBackground,
+        TweenInfo.new(CONFIG.FadeOutSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {BackgroundTransparency = 1}
+    )
+    local barFillFadeOut = TweenService:Create(
+        barFill,
+        TweenInfo.new(CONFIG.FadeOutSpeed, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {BackgroundTransparency = 1}
+    )
+    
+    fadeOutTween:Play()
+    strokeFadeOut:Play()
+    textFadeOut:Play()
+    barBgFadeOut:Play()
+    barFillFadeOut:Play()
+    
+    fadeOutTween.Completed:Connect(function()
+        screenGui:Destroy()
+    end)
+end
+
+_G.updateLoader = updateLoader
+_G.removeLoader = function() loader:Remove() end
+
+-- ===================== ANTI-CHEAT BYPASS =====================
+Site43Lib = {}
+
+function Site43Lib:BrickAntiCheat()
+    if game:GetService("ReplicatedStorage"):FindFirstChild("PlutonMessager") then
+        local Old
+        Old = hookmetamethod(game, "__namecall", newcclosure(function(Self, ...)
+            local Method = getnamecallmethod()
+            if Method == "FireServer" and Self.Name == "PlutonMessager" then
+                return nil
+            end
+            return Old(Self, ...)
+        end))
+
+        RecoveredAntiCheat = nil 
+
+        for _, v in pairs(getnilinstances()) do 
+            if v.ClassName == 'LocalScript' and v.Name == 'Pluton_Client' then
+                RecoveredAntiCheat = v
+                break
+            end
+        end
+        
+        for _, i in pairs(getgc(true)) do 
+            if typeof(i) == 'function' then 
+                functioninfo = debug.getinfo(i)
+
+                if not functioninfo then continue end
+
+                if functioninfo.name == 'PhysicalPunish' or functioninfo.name == 'ClearRS' or functioninfo.name == 'onSuspectGui' or functioninfo.name == 'SearchGUI' then 
+                    hookfunction(i, function() 
+                        return
+                    end)
+                else
+                    if functioninfo.name == 'CheckGui' then
+                        hookfunction(i, function() 
+                            return true
+                        end)
+                    end
+                end
+            end
+        end
+
+        print("Recovered Anti-Cheat:", RecoveredAntiCheat)
+
+        MessagerDestroyed = game:GetService("ReplicatedStorage"):WaitForChild("ACS_Engine", 10) and game:GetService("ReplicatedStorage").ACS_Engine:WaitForChild("Kick") or game:GetService("ReplicatedStorage"):WaitForChild("Kick")
+
+        PatchListOne = getconnections(game:GetService("ReplicatedStorage"):WaitForChild("PlutonMessager").AncestryChanged)
+        PatchListTwo = getconnections(MessagerDestroyed:GetPropertyChangedSignal("Parent"))
+
+        for _, connection in pairs(PatchListOne) do 
+            connection:Disable()
+        end
+
+        for _, connection in pairs(PatchListTwo) do 
+            connection:Disable()
+        end
+
+        spawn(function()
+            local properties = {
+                "CanCollide",
+                "RotVelocity", 
+                "Velocity",
+                "AssemblyLinearVelocity",
+                "AssemblyAngularVelocity"
+            }
+            
+            local bodyParts = {"HumanoidRootPart", "Torso", "Head"}
+            
+            local function PatchPart(part, partName)
+                for _, property in ipairs(properties) do
+                    local connections = getconnections(part:GetPropertyChangedSignal(property))
+                    for _, connection in ipairs(connections) do
+                        connection:Disable()
+                    end
+                end
+            end
+            
+            while wait(1) do
+                pcall(function()
+                    local char = game.Players.LocalPlayer.Character
+                    if char then
+                        for _, partName in ipairs(bodyParts) do
+                            local part = char:FindFirstChild(partName)
+                            if part then
+                                PatchPart(part, partName)
+                            end
+                            task.wait(1)
+                        end
+                    end
+                end)
+            end
+        end)
+
+        game:GetService("ReplicatedStorage"):FindFirstChild("PlutonMessager"):Destroy()
+
+        local cloneref = cloneref or function(...) 
+            return ...
+        end
+
+        local clonefunction = clonefunction or function(...)
+            return ...
+        end
+
+        local Players, LocalPlayer, StarterGui = cloneref(game:GetService("Players")), cloneref(game:GetService("Players").LocalPlayer), cloneref(game:GetService("StarterGui"))
+
+        local SetCore = clonefunction(StarterGui.SetCore)
+        local FindFirstChild = clonefunction(game.FindFirstChild)
+
+        local CompareInstances = (CompareInstances and function(Instance1, Instance2)
+                if typeof(Instance1) == "Instance" and typeof(Instance2) == "Instance" then
+                    return CompareInstances(Instance1, Instance2)
+                end
+            end)
+        or
+        function(Instance1, Instance2)
+            return (typeof(Instance1) == "Instance" and typeof(Instance2) == "Instance")
+        end
+
+        local CanCastToSTDString = function(...)
+            return pcall(FindFirstChild, game, ...)
+        end
+
+        getgenv().ED_AntiKick = {
+            Enabled = true,
+            SendNotifications = false,
+            CheckCaller = true
+        }
+
+        local OldNamecall; OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(...)
+            local self, message = ...
+            local method = getnamecallmethod()
+            
+            if ((getgenv().ED_AntiKick.CheckCaller and not checkcaller()) or true) and CompareInstances(self, LocalPlayer) and string.gsub(method, "^%l", string.upper) == "Kick" and ED_AntiKick.Enabled then
+                if CanCastToSTDString(message) then
+                    return
+                end
+            end
+
+            return OldNamecall(...)
+        end))
+
+        local OldFunction; OldFunction = hookfunction(LocalPlayer.Kick, function(...)
+            local self, Message = ...
+
+            if ((ED_AntiKick.CheckCaller and not checkcaller()) or true) and CompareInstances(self, LocalPlayer) and ED_AntiKick.Enabled then
+                if CanCastToSTDString(Message) then
+                    return
+                end
+            end
+        end)
+    end
+end
+
+-- ===================== EXECUTE ANTI-CHEAT BYPASS =====================
+task.spawn(function()
+    wait(0.5)
+    updateLoader("Bypassing Anti-Cheat", 10)
+    wait(4)
+    
+    Site43Lib:BrickAntiCheat()
+    
+    wait(0.5)
+    updateLoader("Loading Assets", 35)
+    wait(0.5)
+    updateLoader("Loading Services", 60)
+    wait(0.5)
+    updateLoader("Finalizing", 85)
+    wait(0.5)
+    updateLoader("Loading...", 100)
+    wait(0.5)
+    loader:Remove()
+    _G.LoaderFinished = true
+end)
+
+-- Wait for loader to complete before executing main script
+while not _G.LoaderFinished do
+    wait(0.1)
+end
+
+-- ===================== MAIN SCRIPT =====================
 if Library then
     Library:Unload()
+end
+
+-- Delete only Assets folder in matcha, keep Configs
+if isfolder("matcha/Assets") then
+    delfolder("matcha/Assets")
 end
 
 local LoadTick = os.clock()
@@ -6198,7 +6570,6 @@ local Library do
 			            Library:Unload()
 			        end)
 			
-			        -- Added Rejoin Button
 			        SettingsSection:Button():Add("Rejoin", function()
 			            local LocalPlayer = Players.LocalPlayer
 			            if LocalPlayer then
@@ -6206,7 +6577,6 @@ local Library do
 			            end
 			        end)
 			
-			        -- Added Serverhop Button
 			        SettingsSection:Button():Add("Serverhop", function()
                         local LocalPlayer = Players.LocalPlayer
 			            if LocalPlayer then
@@ -6260,6 +6630,12 @@ players = game:GetService("Players")
 wrk = game:GetService("Workspace")
 plr = players.LocalPlayer
 
+-- Fonction utilitaire universelle SetCorner - Déplacée en début pour éviter limit 200 registres
+local function SetCorner(parent, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 12)
+    c.Parent = parent
+end
 
 local function onCharacterAdded(character)
     hrp = character:WaitForChild("HumanoidRootPart")
@@ -6272,78 +6648,55 @@ if plr.Character then
     onCharacterAdded(plr.Character)
 end
 
-local camera = wrk.CurrentCamera
-local mouse = plr:GetMouse()
+-- Configuration centralisée pour éviter limite de 200 registres
+_G.Site43 = _G.Site43 or {
+    cam = wrk.CurrentCamera,
+    mouse = plr:GetMouse(),
+    http = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request,
+    
+    -- Aimbot Config
+    aimbot = {
+        hue = 0, rainbowFov = false, rainbowSpeed = 0.005,
+        fov = 120, parts = {"Head"}, aiming = false, predictionStrength = 0.065, smoothing = 0.80,
+        enabled = false, wallCheck = false, stickyAim = false, teamCheck = false, healthCheck = false, minHealth = 0,
+        circleColor = Color3.fromRGB(255, 0, 0), targetedCircleColor = Color3.fromRGB(180, 48, 48),
+        currentTarget = nil, circle = nil, aimViewerEnabled = false, ignoreSelf = true
+    },
+    
+    -- AntiAim Config
+    antiAim = {
+        enabled = false, amountX = 0, amountY = -100, amountZ = 0,
+        method = "Reset Velo", randomVeloRange = 100
+    },
+    
+    -- Features Flags
+    features = {
+        invInspectorEnabled = false, skelEnabled = false, thirdPersonEnabled = false,
+        crouchJumpEnabled = false, changeFovEnabled = false, autoKickEnabled = false,
+        gunCustomizerEnabled = false, chamsEnabled = false
+    }
+}
 
-local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+local cfg = _G.Site43
 
-local hue = 0
-local rainbowFov = false
-local rainbowSpeed = 0.005
+local camera = cfg.cam
+local mouse = cfg.mouse
 
-local aimFov = 120
-local aimParts = {"Head"}
-local aiming = false
-local predictionStrength = 0.065
-local smoothing = 0.80
+local hue = cfg.aimbot.hue
+local rainbowFov = cfg.aimbot.rainbowFov
+local rainbowSpeed = cfg.aimbot.rainbowSpeed
 
-local aimbotEnabled = false
-local wallCheck = false
-local stickyAimEnabled = false
-local teamCheck = false
-local healthCheck = false
-local minHealth = 0
-
-local antiAim = false
-
-local antiAimAmountX = 0
-local antiAimAmountY = -100
-local antiAimAmountZ = 0
-
-local antiAimMethod = "Reset Velo"
-
-local randomVeloRange = 100
-
-
-RunService.Heartbeat:Connect(function()
-    if antiAim then
-        if antiAimMethod == "Reset Velo" then
-            local vel = hrp.Velocity
-            hrp.Velocity = Vector3.new(antiAimAmountX, antiAimAmountY, antiAimAmountZ)
-            RunService.RenderStepped:Wait()
-            hrp.Velocity = vel
-        elseif antiAimMethod == "Reset Pos [BROKEN]" then
-            local pos = hrp.CFrame
-            hrp.Velocity = Vector3.new(antiAimAmountX, antiAimAmountY, antiAimAmountZ)
-            RunService.RenderStepped:Wait()
-            hrp.CFrame = pos
-        elseif antiAimMethod == "Random Velo" then
-            local vel = hrp.Velocity
-            local a = math.random(-randomVeloRange,randomVeloRange)
-            local s = math.random(-randomVeloRange,randomVeloRange)
-            local d = math.random(-randomVeloRange,randomVeloRange)
-            hrp.Velocity = Vector3.new(a,s,d)
-            RunService.RenderStepped:Wait()
-            hrp.Velocity = vel
-        end
-    end
-end)
-
-
-
-local circleColor = Color3.fromRGB(255, 0, 0)
-local targetedCircleColor = Color3.fromRGB(180, 48, 48)
-
-local aimViewerEnabled = false
-local ignoreSelf = true
-
-
+local aimFov = cfg.aimbot.fov
+local aimParts = cfg.aimbot.parts
+local aiming = cfg.aimbot.aiming
+local predictionStrength = cfg.aimbot.predictionStrength
+local smoothing = cfg.aimbot.smoothing
 
 local fovCircle = Drawing.new("Circle")
 fovCircle.Thickness = 2
 fovCircle.Radius = aimFov
 fovCircle.Filled = false
-fovCircle.Color = circleColor
+fovCircle.Color = cfg.aimbot.circleColor
 fovCircle.Visible = false
 
 local currentTarget = nil
@@ -6353,8 +6706,32 @@ local alliedTeams = {
     ["InsurrectionDuChaos"] = true,
 }
 
+RunService.Heartbeat:Connect(function()
+    if cfg.antiAim.enabled then
+        if cfg.antiAim.method == "Reset Velo" then
+            local vel = hrp.Velocity
+            hrp.Velocity = Vector3.new(cfg.antiAim.amountX, cfg.antiAim.amountY, cfg.antiAim.amountZ)
+            RunService.RenderStepped:Wait()
+            hrp.Velocity = vel
+        elseif cfg.antiAim.method == "Reset Pos [BROKEN]" then
+            local pos = hrp.CFrame
+            hrp.Velocity = Vector3.new(cfg.antiAim.amountX, cfg.antiAim.amountY, cfg.antiAim.amountZ)
+            RunService.RenderStepped:Wait()
+            hrp.CFrame = pos
+        elseif cfg.antiAim.method == "Random Velo" then
+            local vel = hrp.Velocity
+            local a = math.random(-cfg.antiAim.randomVeloRange, cfg.antiAim.randomVeloRange)
+            local s = math.random(-cfg.antiAim.randomVeloRange, cfg.antiAim.randomVeloRange)
+            local d = math.random(-cfg.antiAim.randomVeloRange, cfg.antiAim.randomVeloRange)
+            hrp.Velocity = Vector3.new(a, s, d)
+            RunService.RenderStepped:Wait()
+            hrp.Velocity = vel
+        end
+    end
+end)
+
 local function checkTeam(player)
-    if teamCheck then
+    if cfg.aimbot.teamCheck then
         if player.Team == plr.Team then
             return true
         end
@@ -6410,14 +6787,14 @@ local function getTarget()
 
     for _, player in ipairs(players:GetPlayers()) do
         if player ~= plr and player.Character and not checkTeam(player) then
-            if player.Character.Humanoid.Health >= minHealth or not healthCheck then
+            if player.Character.Humanoid.Health >= cfg.aimbot.minHealth or not cfg.aimbot.healthCheck then
                 local targetPart = getClosestPart(player.Character)
                 if targetPart then
                     local screenPos = camera:WorldToViewportPoint(targetPart.Position)
                     local cursorDistance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
 
                     if cursorDistance < shortestCursorDistance then
-                        if not checkWall(player.Character) or not wallCheck then
+                        if not checkWall(player.Character) or not cfg.aimbot.wallCheck then
                             shortestCursorDistance = cursorDistance
                             nearestPlayer = player
                             closestPart = targetPart
@@ -6447,7 +6824,7 @@ end
 local function aimAt(player, part)
     local predictedPosition = predict(player, part)
     if predictedPosition then
-        if player.Character.Humanoid.Health >= minHealth or not healthCheck then
+        if player.Character.Humanoid.Health >= cfg.aimbot.minHealth or not cfg.aimbot.healthCheck then
             local targetCFrame = CFrame.new(camera.CFrame.Position, predictedPosition)
             camera.CFrame = smooth(camera.CFrame, targetCFrame)
         end
@@ -6455,7 +6832,7 @@ local function aimAt(player, part)
 end
 
 RunService.RenderStepped:Connect(function()
-    if aimbotEnabled then
+    if cfg.aimbot.enabled then
         local offset = 50
         fovCircle.Position = Vector2.new(mouse.X, mouse.Y + offset)
 
@@ -6472,17 +6849,17 @@ RunService.RenderStepped:Connect(function()
         end
 
         if aiming then
-            if stickyAimEnabled and currentTarget then
+            if cfg.aimbot.stickyAim and currentTarget then
                 local headPos = camera:WorldToViewportPoint(currentTarget.Character.Head.Position)
                 local screenPos = Vector2.new(headPos.X, headPos.Y)
                 local cursorDistance = (screenPos - Vector2.new(mouse.X, mouse.Y)).Magnitude
 
-                if cursorDistance > aimFov or (wallCheck and checkWall(currentTarget.Character)) or checkTeam(currentTarget) then
+                if cursorDistance > aimFov or (cfg.aimbot.wallCheck and checkWall(currentTarget.Character)) or checkTeam(currentTarget) then
                     currentTarget = nil
                 end
             end
 
-            if not stickyAimEnabled or not currentTarget then
+            if not cfg.aimbot.stickyAim or not currentTarget then
                 local target, targetPart = getTarget()
                 currentTarget = target
                 currentTargetPart = targetPart
@@ -6499,13 +6876,13 @@ end)
 
 
 mouse.Button2Down:Connect(function()
-    if aimbotEnabled then
+    if cfg.aimbot.enabled then
         aiming = true
     end
 end)
 
 mouse.Button2Up:Connect(function()
-    if aimbotEnabled then
+    if cfg.aimbot.enabled then
         aiming = false
     end
 end)
@@ -6551,6 +6928,7 @@ do
     UtilPage = Window:Page({Name = "Utilitaire", SubPages = true})
     GunPage = Window:Page({Name = "Gun Mods", SubPages = true})
     SkinPage = Window:Page({Name = "Skin ＆ Local", SubPages = true})
+    AuPage = Window:Page({Name = "AutoFarm", SubPages = true})
     TpPage = Window:Page({Name = "Téléporation", SubPages = true})
 
 
@@ -6599,7 +6977,7 @@ do
                     Flag = "SilentAimEnabled",
                     Default = false,
                     Callback = function(Value)
-                       	aimbotEnabled = Value
+                       	cfg.aimbot.enabled = Value
                         fovCircle.Visible = Value
                     end
                 })
@@ -6654,7 +7032,7 @@ Toggle:Colorpicker({
 
                 SilentAimSection:Slider({
                     Name = "Smooth",
-                    Flag = "FoVRadius",
+                    Flag = "Aimbot_Smooth",
                     Min = 1,
                     Suffix = "px",
                     Max = 100,
@@ -6671,7 +7049,7 @@ Toggle:Colorpicker({
 
                 SilentAimSection:Slider({
                     Name = "Prediction",
-                    Flag = "FoVRadius",
+                    Flag = "Aimbot_Prediction",
                     Min = 0,
                     Suffix = "px",
                     Max = 200,
@@ -6686,7 +7064,7 @@ Toggle:Colorpicker({
                 
                 SilentAimSection:Slider({
                     Name = "Aimbot Fov",
-                    Flag = "FoVRadius",
+                    Flag = "Aimbot_FovRadius",
                     Min = 0,
                     Suffix = "px",
                     Max = 200,
@@ -6707,7 +7085,7 @@ Toggle:Colorpicker({
                     Flag = "SilentAimFoVWallCheck",
                     Default = false,
                     Callback = function(Value)
-                     wallCheck = Value
+                     cfg.aimbot.wallCheck = Value
                     end
                 })
 
@@ -6717,7 +7095,7 @@ Toggle:Colorpicker({
                     Flag = "SilentAimFoVTeamCheck",
                     Default = false,
                     Callback = function(Value)
-                        teamCheck = Value
+                        cfg.aimbot.teamCheck = Value
                     end
                 })
 
@@ -6746,7 +7124,8 @@ local Config = {
     ShowTargetText = false,
     Snapline = false,
     DebugWallbang = false,
-    IgnoreStaff = false
+    IgnoreStaff = false,
+    FovCenter = false
 }
 
 _G.knownStaff = _G.knownStaff or {}
@@ -6767,7 +7146,7 @@ local TargetText = Drawing.new("Text")
 TargetText.Size = 18
 TargetText.Center = true
 TargetText.Outline = true
-TargetText.Color = Color3.fromRGB(255, 255, 0) -- Jaune
+TargetText.Color = Color3.fromRGB(255, 255, 0)
 TargetText.Visible = false
 TargetText.Text = ""
 
@@ -6789,8 +7168,16 @@ RaycastWhitelist.FilterType = Enum.RaycastFilterType.Include
 
 RunService.RenderStepped:Connect(function()
     if Config.Enabled and Config.ShowFOVCircle then
-        local mousePos = UserInputService:GetMouseLocation()
-        FOVCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
+        local circlePos
+        if Config.FovCenter then
+            local screenSize = LocalPlayer:GetMouse().ViewSizeX, LocalPlayer:GetMouse().ViewSizeY
+            local viewportSize = Workspace.CurrentCamera.ViewportSize
+            circlePos = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+        else
+            local mousePos = UserInputService:GetMouseLocation()
+            circlePos = Vector2.new(mousePos.X, mousePos.Y)
+        end
+        FOVCircle.Position = circlePos
         FOVCircle.Radius = Config.FOV
         FOVCircle.Visible = true
     else
@@ -7032,7 +7419,13 @@ SilentAimSection:Toggle({
 })
 
 
-
+SilentAimSection:Toggle({
+    Name = "Fov Center",
+    Default = false,
+    Callback = function(v)
+        Config.FovCenter = v
+    end
+})
 
 SilentAimSection:Toggle({
     Name = "Wall Check",
@@ -7043,14 +7436,7 @@ SilentAimSection:Toggle({
     end
 })
 
-SilentAimSection:Toggle({
-    Name = "Wallbang",
-    Flag = "Wallbang",
-    Default = false,
-    Callback = function(v)
-        Config.Wallbang = v
-    end
-})
+
 
 SilentAimSection:Toggle({
     Name = "TeamCheck",
@@ -7060,6 +7446,18 @@ SilentAimSection:Toggle({
         Config.TeamCheck = v
     end
 })
+
+
+SilentAimSection:Toggle({
+    Name = "Wallbang",
+    Flag = "Wallbang",
+    Default = false,
+    Callback = function(v)
+        Config.Wallbang = v
+    end
+})
+
+
 
 SilentAimSection:Toggle({
     Name = "Show Target Text",
@@ -7095,8 +7493,7 @@ SilentAimSection:Toggle({
     end
 })
 
--- Inventory Inspector (Modern UI)
-local invInspectorEnabled = false
+local invInspectorEnabled = _G.Site43.features.invInspectorEnabled
 local lastInspectedPlayer = nil
 
 local invUI = {}
@@ -7291,7 +7688,7 @@ end
 
 task.spawn(function()
     while task.wait(0.15) do
-        if invInspectorEnabled and Config.Enabled and _G.TargetedPlayer then
+        if _G.Site43.features.invInspectorEnabled and Config.Enabled and _G.TargetedPlayer then
             updateTargetedPlayerInfo(_G.TargetedPlayer)
             lastInspectedPlayer = _G.TargetedPlayer
         else
@@ -7306,7 +7703,7 @@ SilentAimSection:Toggle({
     Flag = "InvInspector",
     Default = false,
     Callback = function(v)
-        invInspectorEnabled = v
+        _G.Site43.features.invInspectorEnabled = v
         if not v then
             invUI.main.Visible = false
             lastInspectedPlayer = nil
@@ -7535,9 +7932,7 @@ local function DrawSkeleton(plr)
     else        coroutine.wrap(UpdaterR6)() end
 end
 
--- =============================================
---         CHAMS (Highlight)
--- =============================================
+
 
 local function ApplyChamsToChar(char, color)
     if AllChams[char] then return end
@@ -7658,11 +8053,11 @@ local function ESP(plr)
                 if ESP_Settings.HealthBar then
                     local hum = plr.Character:FindFirstChild("Humanoid")
                     local hp  = (hum and hum.MaxHealth > 0) and (hum.Health / hum.MaxHealth) or 0
-                    library.healthbar.From      = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY * 2)
-                    library.healthbar.To        = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y - DistanceY * 2)
+                    library.healthbar.From      = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY * 1.3)
+                    library.healthbar.To        = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y - DistanceY * 1.3)
                     library.healthbar.Visible   = true
-                    library.greenhealth.From    = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY * 2)
-                    library.greenhealth.To      = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY * 2 - DistanceY * 4 * hp)
+                    library.greenhealth.From    = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY * 1.3)
+                    library.greenhealth.To      = Vector2.new(HumPos.X - DistanceY - 4, HumPos.Y + DistanceY * 1.3 - DistanceY * 2.6 * hp)
                     library.greenhealth.Color   = Color3.fromRGB(255, 0, 0):Lerp(Color3.fromRGB(0, 255, 0), hp)
                     library.greenhealth.Visible = true
                 else
@@ -7684,7 +8079,7 @@ local function ESP(plr)
                     end
                     if item then
                         library.itemTag.Text     = item
-                        library.itemTag.Position = Vector2.new(HumPos.X, HumPos.Y + DistanceY * 2 + 14)
+                        library.itemTag.Position = Vector2.new(HumPos.X, HumPos.Y + DistanceY * 1.3)
                         library.itemTag.Color    = Settings.Item_Color
                         library.itemTag.Visible  = true
                     else library.itemTag.Visible = false end
@@ -7752,6 +8147,8 @@ end
 
 Players.PlayerAdded:Connect(addPlayer)
 Players.PlayerRemoving:Connect(removePlayer)
+
+
 
 
 VisualSection = VisualSubPage:Section({ Name = "ESP", Side = 1 })
@@ -7839,7 +8236,6 @@ ChamsToggle:Colorpicker({
 })
 
 
-
         UtilAimSubPage = UtilPage:SubPage({Name = "Players", Columns = 2}) 
         AntiiiSection = UtilAimSubPage:Section({Name = "Players Movement", Side = 1}) 
 
@@ -7849,9 +8245,7 @@ ChamsToggle:Colorpicker({
 
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local spinning = false
-local spinConn = nil
-local spinSpeed = 20 
+local SPIN = {state = false, conn = nil, speed = 20}
 
 
 
@@ -7861,21 +8255,21 @@ local spinSpeed = 20
                     Flag = "Spinbot_Toggle",
                     Default = false,
                     Callback = function(state)
-        spinning = state
+        SPIN.state = state
 
-        if spinning then
+        if SPIN.state then
             local char = player.Character or player.CharacterAdded:Wait()
             local hrp = char:WaitForChild("HumanoidRootPart")
 
-            spinConn = RunService.RenderStepped:Connect(function()
-                if hrp and hrp.Parent and spinning then
-                    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+            SPIN.conn = RunService.RenderStepped:Connect(function()
+                if hrp and hrp.Parent and SPIN.state then
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(SPIN.speed), 0)
                 end
             end)
         else
-            if spinConn then
-                spinConn:Disconnect()
-                spinConn = nil
+            if SPIN.conn then
+                SPIN.conn:Disconnect()
+                SPIN.conn = nil
             end
         end
     
@@ -7890,8 +8284,8 @@ local spinSpeed = 20
 
 
 
--- 3e personne
-local thirdPersonEnabled = false
+local TP = {enabled = _G.Site43.features.thirdPersonEnabled}
+local CJ = {enabled = _G.Site43.features.crouchJumpEnabled, UIS = game:GetService("UserInputService")}
 
 local function forceThirdPerson()
     local lplr = Players.LocalPlayer
@@ -7910,7 +8304,8 @@ AntiiiSection:Toggle({
     Flag = "ThirdPerson_Toggle",
     Default = false,
     Callback = function(state)
-        thirdPersonEnabled = state
+        _G.Site43.features.thirdPersonEnabled = state
+        TP.enabled = state
         local lplr = Players.LocalPlayer
         if state then
             forceThirdPerson()
@@ -7922,29 +8317,26 @@ AntiiiSection:Toggle({
 })
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
-    if thirdPersonEnabled then forceThirdPerson() end
+    if _G.Site43.features.thirdPersonEnabled then forceThirdPerson() end
 end)
 
 RunService.RenderStepped:Connect(function()
-    if thirdPersonEnabled then forceThirdPerson() end
+    if _G.Site43.features.thirdPersonEnabled then forceThirdPerson() end
 end)
-
--- Saut accroupi
-local crouchJumpEnabled = false
-local UIS = game:GetService("UserInputService")
 
 AntiiiSection:Toggle({
     Name = "Saut Accroupi",
     Flag = "CrouchJump_Toggle",
     Default = false,
     Callback = function(state)
-        crouchJumpEnabled = state
+        _G.Site43.features.crouchJumpEnabled = state
+        CJ.enabled = state
     end
 })
 
-UIS.InputBegan:Connect(function(input, gameProcessed)
+CJ.UIS.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if not crouchJumpEnabled then return end
+    if not _G.Site43.features.crouchJumpEnabled then return end
     if input.KeyCode == Enum.KeyCode.Space then
         local lplr = Players.LocalPlayer
         local char = lplr.Character
@@ -7964,9 +8356,7 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 
-local normalFOV = 70
-local zoomFOVAmount = 20
-local fovZoomHeld = false
+local FOV = {normalFOV = 70, zoomAmount = 20, zoomHeld = false}
 
 AntiiiSection:Toggle({
     Name = "Zoom FOV (Maintien T)",
@@ -7974,9 +8364,9 @@ AntiiiSection:Toggle({
     Default = false,
     Callback = function(v)
         if not v then
-            fovZoomHeld = false
+            FOV.zoomHeld = false
             local ts = game:GetService("TweenService")
-            ts:Create(workspace.CurrentCamera, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {FieldOfView = normalFOV}):Play()
+            ts:Create(workspace.CurrentCamera, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {FieldOfView = FOV.normalFOV}):Play()
         end
     end
 }):Keybind({
@@ -7985,27 +8375,26 @@ AntiiiSection:Toggle({
     Mode = "Hold",
     Callback = function(held)
         if not Library.Flags["ZoomFOV_Enabled"] then return end
-        fovZoomHeld = held
+        FOV.zoomHeld = held
         
-        local targetFOV = held and zoomFOVAmount or normalFOV
+        local targetFOV = held and FOV.zoomAmount or FOV.normalFOV
         local ts = game:GetService("TweenService")
         ts:Create(workspace.CurrentCamera, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {FieldOfView = targetFOV}):Play()
     end
 })
 
-local alwaysRunning = false
-local alwaysRunConn = nil
+local AR = {running = false, conn = nil}
 
 AntiiiSection:Toggle({
     Name = "Always Run",
     Flag = "AlwaysRun_Enabled",
     Default = false,
     Callback = function(v)
-        alwaysRunning = v
+        AR.running = v
         if v then
-            if alwaysRunConn then alwaysRunConn:Disconnect() end
-            alwaysRunConn = RunService.RenderStepped:Connect(function()
-                if alwaysRunning then
+            if AR.conn then AR.conn:Disconnect() end
+            AR.conn = RunService.RenderStepped:Connect(function()
+                if AR.running then
                     pcall(function()
                         local vim = game:GetService("VirtualInputManager")
                         vim:SendKeyEvent(true, Enum.KeyCode.LeftShift, false, game)
@@ -8013,9 +8402,9 @@ AntiiiSection:Toggle({
                 end
             end)
         else
-            if alwaysRunConn then
-                alwaysRunConn:Disconnect()
-                alwaysRunConn = nil
+            if AR.conn then
+                AR.conn:Disconnect()
+                AR.conn = nil
             end
             pcall(function()
                 local vim = game:GetService("VirtualInputManager")
@@ -8025,31 +8414,29 @@ AntiiiSection:Toggle({
     end
 })
 
-local loopWalkSpeed = false
-local loopWSConn = nil
-local currentWSVal = 16
+local WS = {enabled = false, conn = nil, speed = 16}
 
 AntiiiSection:Toggle({
     Name = "Toggle WalkSpeed",
     Flag = "WalkSpeed_Toggle",
     Default = false,
     Callback = function(state)
-        loopWalkSpeed = state
+        WS.enabled = state
         local lplr = Players.LocalPlayer
         if state then
-            if loopWSConn then loopWSConn:Disconnect() end
-            loopWSConn = RunService.RenderStepped:Connect(function()
-                if loopWalkSpeed and lplr.Character then
+            if WS.conn then WS.conn:Disconnect() end
+            WS.conn = RunService.RenderStepped:Connect(function()
+                if WS.enabled and lplr.Character then
                     local hum = lplr.Character:FindFirstChildOfClass("Humanoid")
                     if hum then
-                        hum.WalkSpeed = currentWSVal
+                        hum.WalkSpeed = WS.speed
                     end
                 end
             end)
         else
-            if loopWSConn then
-                loopWSConn:Disconnect()
-                loopWSConn = nil
+            if WS.conn then
+                WS.conn:Disconnect()
+                WS.conn = nil
             end
             if lplr.Character then
                 local hum = lplr.Character:FindFirstChildOfClass("Humanoid")
@@ -8060,6 +8447,59 @@ AntiiiSection:Toggle({
         end
     end
 })
+
+
+local CFV = {enabled = _G.Site43.features.changeFovEnabled, conn = nil}
+
+AntiiiSection:Toggle({
+    Name = "Toggle Change FOV",
+    Flag = "ChangeFOV_Toggle",
+    Default = false,
+    Callback = function(state)
+        _G.Site43.features.changeFovEnabled = state
+        CFV.enabled = state
+        if state then
+            workspace.CurrentCamera.FieldOfView = FOV.normalFOV
+            if CFV.conn then CFV.conn:Disconnect() end
+            CFV.conn = RunService.RenderStepped:Connect(function()
+                if _G.Site43.features.changeFovEnabled and not FOV.zoomHeld then
+                    workspace.CurrentCamera.FieldOfView = FOV.normalFOV
+                end
+            end)
+        else
+            if CFV.conn then
+                CFV.conn:Disconnect()
+                CFV.conn = nil
+            end
+            workspace.CurrentCamera.FieldOfView = 70
+        end
+    end
+}):Keybind({
+    Flag = "ChangeFOV_Keybind",
+    Default = Enum.KeyCode.V,
+    Mode = "Toggle",
+    Callback = function(state)
+        _G.Site43.features.changeFovEnabled = state
+        CFV.enabled = state
+        Library.Flags["ChangeFOV_Toggle"] = state
+        if state then
+            workspace.CurrentCamera.FieldOfView = FOV.normalFOV
+            if CFV.conn then CFV.conn:Disconnect() end
+            CFV.conn = RunService.RenderStepped:Connect(function()
+                if _G.Site43.features.changeFovEnabled and not FOV.zoomHeld then
+                    workspace.CurrentCamera.FieldOfView = normalFOV
+                end
+            end)
+        else
+            if changeFovConn then
+                changeFovConn:Disconnect()
+                changeFovConn = nil
+            end
+            workspace.CurrentCamera.FieldOfView = 70
+        end
+    end
+})
+
 
 AntiiiSection:Slider({
     Name = "WalkSpeed",
@@ -8093,6 +8533,7 @@ AntiiiSection:Slider({
     end
 })
 
+
 AntiiiSection:Slider({
     Name = "Change FOV",
     Flag = "Slider_FOV",
@@ -8102,9 +8543,9 @@ AntiiiSection:Slider({
     Default = 70,
     Decimals = 1,
     Callback = function(v)
-        normalFOV = v
-        if not fovZoomHeld then
-            workspace.CurrentCamera.FieldOfView = normalFOV
+        FOV.normalFOV = v
+        if _G.Site43.features.changeFovEnabled and not FOV.zoomHeld then
+            workspace.CurrentCamera.FieldOfView = FOV.normalFOV
         end
     end
 })
@@ -8556,7 +8997,7 @@ end)
 local groupId = 10944938
 local lp = game:GetService("Players").LocalPlayer
 
-local autoKickEnabled = false
+local autoKickEnabled = _G.Site43.features.autoKickEnabled
 local knownStaff = _G.knownStaff
 
 StaffSection:Toggle({
@@ -8564,7 +9005,7 @@ StaffSection:Toggle({
     Flag = "AutoKickStaff_Button",
     Default = false,
     Callback = function(s)
-        autoKickEnabled = s
+        _G.Site43.features.autoKickEnabled = s
         Library:Notification("Auto-kick staff", "L'auto-kick est " .. (s and "activé" or "désactivé"), 5)
     end
 })
@@ -8590,7 +9031,7 @@ StaffSection:Button():Add("Vérifier Staff", function()
                 staffFoundCount = staffFoundCount + 1
                 Library:Notification("Staff détecté", p.Name .. " est dans le serveur.", 8)
                 pcall(refreshStaffList)
-                if autoKickEnabled then
+                if _G.Site43.features.autoKickEnabled then
                     lp:Kick("Auto-kick : Un staff est dans la game.")
                 end
             end
@@ -8621,7 +9062,7 @@ game:GetService("Players").PlayerAdded:Connect(function(p)
         end
         if isStaff then
             knownStaff[p.UserId] = true
-            if autoKickEnabled then
+            if _G.Site43.features.autoKickEnabled then
                 lp:Kick("Auto-kick : Le staff " .. p.Name .. " a rejoint la game.")
             else
                 Library:Notification("Alerte Staff", "Le staff " .. p.Name .. " vient de se connecter.", 10)
@@ -8639,7 +9080,6 @@ game:GetService("Players").PlayerRemoving:Connect(function(p)
      end
 end)
 
--- Staff Player List (Side 2)
 StaffListSection = UtilAimSubPage:Section({Name = "Staff List", Side = 2})
 
 staffListNames = {}
@@ -8647,7 +9087,6 @@ selectedStaffName = nil
 staffSpectating = false
 staffInspectorOpen = false
 
--- Staff Inspector UI (reuse same style as SilentAimInspector)
 staffInspUI = {}
 staffInspUI.sc = Instance.new("ScreenGui")
 staffInspUI.sc.Name = "StaffInspector_Modern"
@@ -8834,7 +9273,6 @@ function updateStaffInspector(targetPlayer)
     staffInspUI.main.Visible = true
 end
 
--- Staff List Dropdown
 staffDropdownRef = nil
 
 function getStaffNames()
@@ -8924,7 +9362,6 @@ StaffListSection:Button():Add("Stop", function()
     end
 end)
 
--- Auto-refresh inspector if open
 task.spawn(function()
     while task.wait(0.5) do
         if staffInspectorOpen and selectedStaffName then
@@ -9108,17 +9545,14 @@ function Site43Lib:BrickAntiCheat()
 
         game:GetService("ReplicatedStorage"):FindFirstChild("PlutonMessager"):Destroy()
 
-        --// Cache
 
         local getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller, lower, gsub, match = getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller, string.lower, string.gsub, string.match
 
-        --// Loaded check
 
         if getgenv().ED_AntiKick then
             return
         end
 
-        --// Variables
 
         local cloneref = cloneref or function(...) 
             return ...
@@ -9223,9 +9657,7 @@ ExploitSection:Button():Add("Delete KillZones", function()
     )
 end)
 
-local AutoVent = false
-local VentConns = {}
-local ScrewVentRemote = nil
+local AV = {enabled = false, conns = {}, remote = nil}
 
 task.spawn(function()
     pcall(function()
@@ -9235,7 +9667,7 @@ task.spawn(function()
             if path then
                 path = path:WaitForChild("Tool", 5)
                 if path then
-                    ScrewVentRemote = path:WaitForChild("ScrewVent", 5)
+                    AV.remote = path:WaitForChild("ScrewVent", 5)
                 end
             end
         end
@@ -9243,12 +9675,12 @@ task.spawn(function()
 end)
 
 local function SetupVentHooks()
-    for _, c in pairs(VentConns) do
+    for _, c in pairs(AV.conns) do
         if c then c:Disconnect() end
     end
-    VentConns = {}
+    AV.conns = {}
     
-    if not AutoVent then return end
+    if not AV.enabled then return end
     
     task.spawn(function()
         pcall(function()
@@ -9268,16 +9700,16 @@ local function SetupVentHooks()
                         local pp = vent:FindFirstChild("ProximityPrompt")
                         if pp and not hooked[pp] then
                             local c = pp.Triggered:Connect(function(p)
-                                if p == LocalPlayer and AutoVent and ScrewVentRemote then
+                                if p == LocalPlayer and AV.enabled and AV.remote then
                                     task.spawn(function()
                                         for i = 1, 4 do
-                                            ScrewVentRemote:FireServer(pp)
+                                            AV.remote:FireServer(pp)
                                             task.wait(0.1)
                                         end
                                     end)
                                 end
                             end)
-                            table.insert(VentConns, c)
+                            table.insert(AV.conns, c)
                             hooked[pp] = true
                             ventCount = ventCount + 1
                         end
@@ -9291,16 +9723,16 @@ local function SetupVentHooks()
                     
                     if vent and (vent.Name:find("Vent") or vent.Name:find("vent")) then
                         local c = d.Triggered:Connect(function(p)
-                            if p == LocalPlayer and AutoVent and ScrewVentRemote then
+                            if p == LocalPlayer and AV.enabled and AV.remote then
                                 task.spawn(function()
                                     for i = 1, 4 do
-                                        ScrewVentRemote:FireServer(d)
+                                        AV.remote:FireServer(d)
                                         task.wait(0.1)
                                     end
                                 end)
                             end
                         end)
-                        table.insert(VentConns, c)
+                        table.insert(AV.conns, c)
                         hooked[d] = true
                         ventCount = ventCount + 1
                     end
@@ -9319,26 +9751,25 @@ ExploitSection:Toggle({
     Flag = "Vent_Open",
     Default = false,
     Callback = function(v)
-        AutoVent = v
+        AV.enabled = v
         
         if v then
             SetupVentHooks()
             Library:Notification("Auto Open Vent", "Auto Open Vent Enabled", 5)
         else
-            for _, c in pairs(VentConns) do
+            for _, c in pairs(AV.conns) do
                 if c then c:Disconnect() end
             end
-            VentConns = {}
+            AV.conns = {}
         end
     end
 })
 
 
-local UnlockReset = false
-local ResetHookInstalled = false
+local UR = {enabled = false, hookInstalled = false}
 
 local function InstallResetHook()
-    if ResetHookInstalled then return end
+    if UR.hookInstalled then return end
     if not ExecutorCapabilities.hookmetamethod then return end
     
     local success, err = pcall(function()
@@ -9347,7 +9778,7 @@ local function InstallResetHook()
             local args = {...}
             local method = getnamecallmethod()
             
-            if UnlockReset and method == "SetCore" and self.Name == "StarterGui" and args[1] == "ResetButtonCallback" then
+            if UR.enabled and method == "SetCore" and self.Name == "StarterGui" and args[1] == "ResetButtonCallback" then
                 if args[2] == false then
                     return OldNameCall(self, args[1], true)
                 end
@@ -9372,7 +9803,7 @@ end
 
 ExploitSection:Toggle({
     Name = "Sortir De l'isolement",
-    Flag = "Vent_Open",
+    Flag = "UnlockReset_Toggle",
     Default = false,
     Callback = function(v)
         UnlockReset = v
@@ -9413,7 +9844,7 @@ end
 ExploitSection:Toggle({
     Name = "BunnyHop",
     Flag = "ToggleBunnyHop",
-    Default = not config["AntiBunnyHop"],
+    Default = false,
     Callback = function(v)
         config["AntiBunnyHop"] = not v
         if v then
@@ -9425,11 +9856,219 @@ ExploitSection:Toggle({
 ExploitSection:Toggle({
     Name = "No Fall Damage",
     Flag = "DisableFallDamage",
-    Default = not config["EnableFallDamage"],
+    Default = false,
     Callback = function(v)
         config["EnableFallDamage"] = not v
     end
 })
+
+-- ============================================================
+-- ANTI SHIELD - Augmente hitbox quand shield equipe
+-- ============================================================
+local AS = {active = false, hitboxes = {}, detectionConns = {}, updateLoop = nil}
+
+local function GetShieldName()
+    return "Shield"
+end
+
+local function HasShield(character)
+    if not character then return false end
+    
+    local shieldName = GetShieldName()
+    
+    -- Vérifier dans le Character
+    if character:FindFirstChild(shieldName) then
+        return true
+    end
+    
+    -- Vérifier dans le Backpack
+    local player = Players:FindFirstChild(character.Parent.Name or "")
+    if player and player:FindFirstChild("Backpack") then
+        if player.Backpack:FindFirstChild(shieldName) then
+            return true
+        end
+    end
+    
+    return false
+end
+
+local function UpdatePlayerHitbox(player, character, hasShield)
+    if not character or not character:FindFirstChild("Head") then return end
+    if player == LocalPlayer then return end
+    
+    local head = character.Head
+    
+    if AS.active then
+        if hasShield then
+            -- Augmenter la hitbox à 3
+            if not AS.hitboxes[player.UserId] then
+                AS.hitboxes[player.UserId] = head.Size
+            end
+            head.Size = Vector3.new(6, 6, 6)
+            head.CanCollide = true
+            head.CanTouch = false
+        else
+            -- Remettre la hitbox normale
+            if AS.hitboxes[player.UserId] then
+                head.Size = AS.hitboxes[player.UserId]
+                AS.hitboxes[player.UserId] = nil
+            else
+                head.Size = Vector3.new(2, 1, 1)
+            end
+            head.CanCollide = false
+            head.CanTouch = true
+        end
+    end
+end
+
+local function CleanupPlayerConnections(userId)
+    if AS.detectionConns[userId] then
+        for _, connection in pairs(AS.detectionConns[userId]) do
+            if connection and connection.Disconnect then
+                connection:Disconnect()
+            end
+        end
+        AS.detectionConns[userId] = nil
+    end
+end
+
+local function SetupShieldDetection(player)
+    if player == LocalPlayer then return end
+    if not player.Character then return end
+    
+    local character = player.Character
+    
+    
+    -- Détecter les changements dans le Character
+    local function OnCharacterChildAdded(child)
+        task.wait(0.1)
+        UpdatePlayerHitbox(player, character, HasShield(character))
+    end
+    
+    local function OnCharacterChildRemoved(child)
+        task.wait(0.1)
+        UpdatePlayerHitbox(player, character, HasShield(character))
+    end
+    
+    -- Détecter les changements dans le Backpack
+    local function OnBackpackChildAdded(child)
+        task.wait(0.1)
+        UpdatePlayerHitbox(player, character, HasShield(character))
+    end
+    
+    local function OnBackpackChildRemoved(child)
+        task.wait(0.1)
+        UpdatePlayerHitbox(player, character, HasShield(character))
+    end
+    
+    local backpack = player:FindFirstChild("Backpack")
+    
+    -- Nettoyer les anciennes connections pour ce player
+    CleanupPlayerConnections(player.UserId)
+    
+    -- Connecter les événements
+    AS.detectionConns[player.UserId] = {
+        CharAdded = character.ChildAdded:Connect(OnCharacterChildAdded),
+        CharRemoved = character.ChildRemoved:Connect(OnCharacterChildRemoved)
+    }
+    
+    if backpack then
+        AS.detectionConns[player.UserId].BackpackAdded = backpack.ChildAdded:Connect(OnBackpackChildAdded)
+        AS.detectionConns[player.UserId].BackpackRemoved = backpack.ChildRemoved:Connect(OnBackpackChildRemoved)
+    end
+    
+    -- Vérifier initalement
+    UpdatePlayerHitbox(player, character, HasShield(character))
+end
+
+local function OnPlayerCharacterRespawned(player)
+    if player == LocalPlayer then return end
+    task.wait(0.5)
+    if player.Character then
+        SetupShieldDetection(player)
+    end
+end
+
+-- Connection globale pour les nouveaux joueurs (en dehors du toggle)
+local NewPlayerConnection = Players.PlayerAdded:Connect(function(player)
+    if AS.active then
+        task.wait(0.5)
+        SetupShieldDetection(player)
+        -- Connecter le respawn
+        player.CharacterAdded:Connect(function()
+            OnPlayerCharacterRespawned(player)
+        end)
+    end
+end)
+
+ExploitSection:Toggle({
+    Name = "Anti Shield",
+    Flag = "AntiShield",
+    Default = false,
+    Callback = function(v)
+        AS.active = v
+        
+        if v then
+            Library:Notification("Anti Shield", "Anti Shield Activé", 5)
+            
+            -- Setup pour tous les joueurs existants
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    SetupShieldDetection(player)
+                    -- Connecter le respawn pour chaque joueur
+                    player.CharacterAdded:Connect(function()
+                        OnPlayerCharacterRespawned(player)
+                    end)
+                end
+            end
+            
+            -- Boucle de mise à jour continue
+            if AS.updateLoop then
+                AS.updateLoop:Disconnect()
+            end
+            AS.updateLoop = RunService.RenderStepped:Connect(function()
+                if AS.active then
+                    for _, player in ipairs(Players:GetPlayers()) do
+                        if player ~= LocalPlayer and player.Character then
+                            UpdatePlayerHitbox(player, player.Character, HasShield(player.Character))
+                        end
+                    end
+                end
+            end)
+        else
+            Library:Notification("Anti Shield", "Anti Shield Désactivé", 5)
+            
+            -- Arrêter la boucle de mise à jour
+            if AS.updateLoop then
+                AS.updateLoop:Disconnect()
+                AS.updateLoop = nil
+            end
+            
+            -- Nettoyer les connections
+            for userId, connections in pairs(AS.detectionConns) do
+                for _, connection in pairs(connections) do
+                    if connection and connection.Disconnect then
+                        connection:Disconnect()
+                    end
+                end
+            end
+            AS.detectionConns = {}
+            AS.hitboxes = {}
+            
+            -- Remettre les hitbox normales
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                    player.Character.Head.Size = Vector3.new(2, 1, 1)
+                    player.Character.Head.CanCollide = false
+                    player.Character.Head.CanTouch = true
+                end
+            end
+        end
+    end
+})
+
+
+
     local Camera = Workspace.CurrentCamera
 
 
@@ -9498,30 +10137,19 @@ DesyncSection:Slider({
 
         GunSection = GunSubPage:Section({Name = "Gun Mods UD", Side = 1}) 
 
-
+-- Regrouper Gun Mods config
+_G.Site43.gunMods = _G.Site43.gunMods or {
+    armeSelectionnee = nil,
+    settings = {degats = 20, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1},
+    toggles = {noSpread = false, noRecoil = false, infiniteRange = false, maxBulletSpeed = false,
+               noBulletDrop = false, maxPenetration = false, infAmmo = false, rapidFire = false, fireRateInf = false}
+}
 
 local player = game.Players.LocalPlayer
-local armeSelectionnee = nil
+local armeSelectionnee = _G.Site43.gunMods.armeSelectionnee
 
-local settings = {
-    degats = 20,
-    bulletSpeed = 5000,
-    maxDistance = 1000,
-    gunSize = 1,
-    bullets = 1
-}
-
-local toggles = {
-    noSpread = false,
-    noRecoil = false,
-    infiniteRange = false,
-    maxBulletSpeed = false,
-    noBulletDrop = false,
-    maxPenetration = false,
-    infAmmo = false,
-    rapidFire = false,
-    fireRateInf = false
-}
+local settings = _G.Site43.gunMods.settings
+local toggles = _G.Site43.gunMods.toggles
 
 local function applyInfAmmo()
 	if not toggles.infAmmo then return end
@@ -9717,8 +10345,10 @@ GunSection:Toggle({Name = "Fire Rate Inf", Flag = "FireRateInf", Default = false
 Button = GunSection:Button()
 Button:Add("Apply Modif", applyWeaponSettings)
 Button:Add("Reset Modif", function()
-    settings = {degats = 20, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1}
-    toggles = {noSpread = false, noRecoil = false, infiniteRange = false, maxBulletSpeed = false, noBulletDrop = false, maxPenetration = false, infAmmo = false, rapidFire = false, fireRateInf = false}
+    _G.Site43.gunMods.settings = {degats = 20, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1}
+    _G.Site43.gunMods.toggles = {noSpread = false, noRecoil = false, infiniteRange = false, maxBulletSpeed = false, noBulletDrop = false, maxPenetration = false, infAmmo = false, rapidFire = false, fireRateInf = false}
+    settings = _G.Site43.gunMods.settings
+    toggles = _G.Site43.gunMods.toggles
     Library:Notification("Reset", "Modifications réinitialisées", 3)
 end)
 
@@ -9749,6 +10379,10 @@ GunnSection:Searchbox({
     Default = nil,
     Callback = function(Value)
         armeSelectionnee = Value
+        -- Auto-apply weapon settings when selection is restored from config
+        if armeSelectionnee and armeSelectionnee ~= "" then
+            task.defer(applyWeaponSettings)
+        end
     end
 })
 
@@ -9767,7 +10401,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 
 local SelectedGun = nil
-local GunCustomizerEnabled = false
+local GunCustomizerEnabled = _G.Site43.features.gunCustomizerEnabled
 local SelectedMaterial = "Neon"
 local SelectedColor = Color3.fromRGB(255, 255, 255)
 
@@ -9792,7 +10426,7 @@ local function getGunNames()
 end
 
 local function applyGunCustomization()
-    if not SelectedGun or not GunCustomizerEnabled then return end
+    if not SelectedGun or not _G.Site43.features.gunCustomizerEnabled then return end
     
     local gunPath = ReplicatedStorage:FindFirstChild("ACS_Engine")
     if not gunPath then return end
@@ -9845,7 +10479,7 @@ local GunSearchbox = SkinSection:Searchbox({
     Callback = function(Value)
         SelectedGun = Value
         
-        if GunCustomizerEnabled then
+        if _G.Site43.features.gunCustomizerEnabled then
             applyGunCustomization()
         end
     end
@@ -9864,7 +10498,7 @@ Skin2Section:Dropdown({
     Callback = function(Value)
         SelectedMaterial = Value
         
-        if GunCustomizerEnabled then
+        if _G.Site43.features.gunCustomizerEnabled then
             applyGunCustomization()
         end
     end
@@ -9876,7 +10510,7 @@ GunCustomizerToggle = Skin2Section:Toggle({
     Flag = "GunCustomizer_Enabled",
     Default = false,
     Callback = function(Value)
-        GunCustomizerEnabled = Value
+        _G.Site43.features.gunCustomizerEnabled = Value
         
         if Value then
             applyGunCustomization()
@@ -9894,29 +10528,113 @@ GunCustomizerToggle:Colorpicker({
     Callback = function(Value)
         SelectedColor = Value
         
-        if GunCustomizerEnabled then
+        if _G.Site43.features.gunCustomizerEnabled then
             applyGunCustomization()
         end
     end
 })
 
 
-        SkinnSection = SkinSubPage:Section({Name = "Local", Side = 2}) 
- 
+-- ===== CLIENT SIDE SECTION =====
+ClientSideSection = SkinSubPage:Section({Name = "Client Side", Side = 1})
 
-local lighting = game:GetService("Lighting")
-
-local lightingCfg = {
-    enabled = false,
-    ambient = Library.Theme.Accent, Alpha = 0,
-    fogStart = 0,
-    fogEnd = 500
+-- Initialize Player Stats table if not exists
+_G.Site43.playerStats = _G.Site43.playerStats or {
+    xpValue = "0",
+    argentValue = "0"
 }
 
+local playerStats = _G.Site43.playerStats
+local lplr = game.Players.LocalPlayer
+
+-- Apply stats function
+local function applyPlayerStats()
+    pcall(function()
+        local playerChar = lplr.Character
+        
+        if not playerChar then
+            warn("Character not found")
+            return
+        end
+        
+        -- Apply XP if value provided
+        if playerStats.xpValue and playerStats.xpValue ~= "0" and playerStats.xpValue ~= "" then
+            local xpValue = tonumber(playerStats.xpValue)
+            if xpValue then
+                pcall(function()
+                    lplr:SetAttribute("XP", xpValue)
+                end)
+            end
+        end
+        
+        -- Apply Argent if value provided
+        if playerStats.argentValue and playerStats.argentValue ~= "0" and playerStats.argentValue ~= "" then
+            local argentValue = tonumber(playerStats.argentValue)
+            if argentValue then
+                pcall(function()
+                    lplr:SetAttribute("Argent", argentValue)
+                end)
+            end
+        end
+        
+        Library:Notification("Success", "Player stats updated Ez", 5)
+        playerStats.xpValue = "0"
+        playerStats.argentValue = "0"
+    end)
+end
+
+-- XP Input
+local xpInput = ClientSideSection:Textbox({
+    Name = "XP Amount",
+    Default = "0",
+    NumOnly = true,
+    Lose_Focus = true,
+    Callback = function(value)
+        playerStats.xpValue = value or "0"
+    end
+})
+
+-- Argent Input
+local argentInput = ClientSideSection:Textbox({
+    Name = "Argent Amount",
+    Default = "0",
+    NumOnly = true,
+    Lose_Focus = true,
+    Callback = function(value)
+        playerStats.argentValue = value or "0"
+    end
+})
+
+
+
+                    ClientSideSection:Button():Add("Apply Stats", function()
+                        local LocalPlayer = Players.LocalPlayer
+                        if LocalPlayer then
+            applyPlayerStats()
+                end
+                    end)
+
+
+
+        SkinnSection = SkinSubPage:Section({Name = "Local", Side = 2}) 
+
+-- Regrouper Lighting config
+_G.Site43.lighting = _G.Site43.lighting or {
+    enabled = false,
+    ambient = Library.Theme.Accent, alpha = 0, fogStart = 0, fogEnd = 500,
+    default_ambient = nil, default_fogStart = nil, default_fogEnd = nil
+}
+
+local lighting = game:GetService("Lighting")
+_G.Site43.lighting.default_ambient = lighting.Ambient
+_G.Site43.lighting.default_fogStart = lighting.FogStart
+_G.Site43.lighting.default_fogEnd = lighting.FogEnd
+
+local lightingCfg = _G.Site43.lighting
 local defaultLighting = {
-    ambient = lighting.Ambient,
-    fogStart = lighting.FogStart,
-    fogEnd = lighting.FogEnd
+    ambient = _G.Site43.lighting.default_ambient,
+    fogStart = _G.Site43.lighting.default_fogStart,
+    fogEnd = _G.Site43.lighting.default_fogEnd
 }
 
 game:GetService("RunService").Heartbeat:Connect(function()
@@ -9965,7 +10683,7 @@ ambientToggle:Colorpicker({
 
 
 
-local ChamsEnabled = false
+local ChamsEnabled = _G.Site43.features.chamsEnabled
 local ChamsParts = {}
 local ChamsColor = Color3.fromRGB(155, 125, 175) 
 local ChamsLoop = nil
@@ -10004,7 +10722,7 @@ local function startChamsLoop()
     end
     
     ChamsLoop = task.spawn(function()
-        while ChamsEnabled do
+        while _G.Site43.features.chamsEnabled do
             applySimpleChams()
             task.wait(5)
         end
@@ -10012,7 +10730,7 @@ local function startChamsLoop()
 end
 
 local function stopChamsLoop()
-    ChamsEnabled = false
+    _G.Site43.features.chamsEnabled = false
     if ChamsLoop then
         task.cancel(ChamsLoop)
         ChamsLoop = nil
@@ -10025,7 +10743,7 @@ ChamsToggle = SkinnSection:Toggle({
     Default = false,
     Callback = function(v)
         if v then
-            ChamsEnabled = true
+            _G.Site43.features.chamsEnabled = true
             startChamsLoop() 
         else
             stopChamsLoop() 
@@ -10041,7 +10759,7 @@ ChamsToggle:Colorpicker({
     Alpha = 0,
     Callback = function(v)
         ChamsColor = v
-        if ChamsEnabled then
+        if _G.Site43.features.chamsEnabled then
             for _, part in ipairs(ChamsParts) do
                 if part and part:IsA("BasePart") then
                     part.Color = ChamsColor
@@ -10052,15 +10770,204 @@ ChamsToggle:Colorpicker({
 })
 
 LocalPlayer.CharacterAdded:Connect(function()
-    if ChamsEnabled then
+    if _G.Site43.features.chamsEnabled then
         task.wait(0.5) 
         applySimpleChams()
     end
 end)
 
+-- ===== AURA SYSTEM (R15 COMPATIBLE) =====
 
-local crosshairConnection = nil
-local crosshairDrawings = nil
+local PA = {
+    color = Color3.fromRGB(169, 242, 112),
+    transparency = 0.2,
+    active = false,
+    particle = "star",
+    particles = {},
+    connection = nil
+}
+
+-- R15 Body Parts
+local body_parts = {
+    "Head",
+    "UpperTorso",
+    "LowerTorso",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot"
+}
+
+local particle_auras = {
+    ["angel"] = game:GetObjects("rbxassetid://97658130917593")[1],
+    ["star"] = game:GetObjects("rbxassetid://73754563740680")[1],
+}
+
+local particle_aura = particle_auras["star"]
+local local_parts = {}
+
+local function update_local_parts()
+    local_parts = {}
+    local character = LocalPlayer.Character
+    if character then
+        for _, part_name in ipairs(body_parts) do
+            local part = character:FindFirstChild(part_name)
+            if part then
+                local_parts[part_name] = part
+            end
+        end
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local_parts["HumanoidRootPart"] = hrp
+        end
+    end
+end
+
+local function do_particle_aura()
+    for i = 1, #PA.particles do
+        if PA.particles[i] then
+            PA.particles[i]:Destroy()
+        end
+        PA.particles[i] = nil
+    end
+
+    local hrp = local_parts["HumanoidRootPart"]
+
+    if hrp then
+        -- Load both angel and star auras
+        for aura_name, aura_object in pairs(particle_auras) do
+            if aura_object then
+                local cloned = aura_object:Clone()
+                local children = cloned:GetChildren()
+
+                for i = 1, #children do
+                    local part = children[i]
+                    local local_part = local_parts[part["Name"]]
+
+                    if local_part then
+                        local part_children = part:GetChildren()
+                        for j = 1, #part_children do
+                            local child = part_children[j]
+                            child["Name"] = "\0\0"
+                            child["Parent"] = local_part
+                            PA.particles[#PA.particles+1] = child
+                        end
+                    else
+                        part:Destroy()
+                    end
+                end
+
+                cloned:Destroy()
+            end
+        end
+    end
+end
+
+-- UI Components for Particle Aura
+local auraToggle = SkinnSection:Toggle({
+    Name = "Particle Aura",
+    Flag = "particle_aura",
+    Default = false,
+    Callback = function(v)
+        PA.active = v
+        wait()
+
+        for i = 1, #PA.particles do
+            if PA.particles[i] then
+                PA.particles[i]:Destroy()
+            end
+            PA.particles[i] = nil
+        end
+
+        if particle_aura_connection then
+            particle_aura_connection:Disconnect()
+            particle_aura_connection = nil
+        end
+
+        if v then
+            update_local_parts()
+            spawn(do_particle_aura)
+            particle_aura_connection = LocalPlayer.CharacterAdded:Connect(function()
+                wait(0.5)
+                update_local_parts()
+                do_particle_aura()
+            end)
+        end
+    end
+})
+
+auraToggle:Colorpicker({
+    Name = "Color",
+    Flag = "particle_aura_color",
+    Default = Color3.fromRGB(169, 242, 112),
+    Alpha = 1,
+    Callback = function(v)
+        particle_aura_color = v
+        local color = ColorSequence.new(v)
+
+        for particle_name, folder in pairs(particle_auras) do
+            if folder and typeof(folder) ~= "string" then
+                local descendants = folder:GetDescendants()
+                for i = 1, #descendants do
+                    local part = descendants[i]
+                    local class_name = part["ClassName"]
+                    if class_name == "PointLight" then
+                        part["Color"] = v
+                    elseif class_name == "ParticleEmitter" or class_name == "Beam" or class_name == "Trail" then
+                        part["Color"] = color
+                    end
+                end
+            end
+        end
+
+        local count = #PA.particles
+        if count > 0 then
+            for i = 1, count do
+                local part = PA.particles[i]
+                if part then
+                    local class_name = part["ClassName"]
+                    if class_name == "PointLight" then
+                        part["Color"] = v
+                    elseif class_name == "ParticleEmitter" or class_name == "Beam" or class_name == "Trail" then
+                        part["Color"] = color
+                    end
+
+                    local descendants = part:GetDescendants()
+                    for j = 1, #descendants do
+                        local desc_part = descendants[j]
+                        local desc_class = desc_part["ClassName"]
+                        if desc_class == "PointLight" then
+                            desc_part["Color"] = v
+                        elseif desc_class == "ParticleEmitter" or desc_class == "Beam" or desc_class == "Trail" then
+                            desc_part["Color"] = color
+                        end
+                    end
+                end
+            end
+        end
+    end
+})
+
+
+-- Update local parts on character load
+LocalPlayer.CharacterAdded:Connect(function()
+    wait(0.1)
+    update_local_parts()
+end)
+
+-- Initial setup
+update_local_parts()
+
+
+local CH = {connection = nil, drawings = nil}
 
 SkinnSection:Toggle({
     Name = "CrossHair",
@@ -10068,7 +10975,6 @@ SkinnSection:Toggle({
     Default = false,
     Callback = function(v)
         if v then
-            -- Charger et exécuter le crosshair
             getgenv().crosshair = {
                 enabled = true,
                 refreshrate = 0,
@@ -10123,7 +11029,7 @@ SkinnSection:Toggle({
                 )
             end
 
-            crosshairConnection = runservice.PostSimulation:Connect(function()
+            CH.connection = runservice.PostSimulation:Connect(function()
                 local _tick = tick()
 
                 if _tick - last_render > crosshair.refreshrate then
@@ -10181,21 +11087,19 @@ SkinnSection:Toggle({
                 end
             end)
 
-            crosshairDrawings = drawings
+            CH.drawings = drawings
             
-            -- Cacher la souris Roblox
             local mouse = game.Players.LocalPlayer:GetMouse()
             mouse.Icon = ""
         else
-            -- Désactiver le crosshair
-            if crosshairConnection then
-                crosshairConnection:Disconnect()
-                crosshairConnection = nil
+            if CH.connection then
+                CH.connection:Disconnect()
+                CH.connection = nil
             end
-            if crosshairDrawings then
+            if CH.drawings then
                 for idx = 1, 8 do
-                    if crosshairDrawings.crosshair[idx] then
-                        crosshairDrawings.crosshair[idx]:Remove()
+                    if CH.drawings.crosshair[idx] then
+                        CH.drawings.crosshair[idx]:Remove()
                     end
                 end
                 for idx = 1, 2 do
@@ -10216,8 +11120,6 @@ SkinnSection:Toggle({
 
 
 
-
-
         
         SkinSubPage = SkinPage:SubPage({Name = "Tracer", Columns = 2}) 
 
@@ -10230,30 +11132,30 @@ camera = workspace.CurrentCamera
 Players = game:GetService("Players")
 lp = Players.LocalPlayer
 
-local tracerCfg = {
+local FX = { tracer = {
     enabled = false,
     color = Library.Theme.Accent, Alpha = 0,
     duration = 4
-}
-
-local hitSoundCfg = {
+}, hitSound = {
     enabled = false,
     volume = 2,
     soundId = "rbxassetid://120904325097533"
-}
+} }
 
 local sounds = {
-    ["Bameware "] = "rbxassetid://3124331820",
     ["Senpai"] = "rbxassetid://105263704862377",
     ["Fatality"] = "rbxassetid://6534947869",
     ["UwU"] = "rbxassetid://120904325097533",
     ["Rust"] = "rbxassetid://5043539486",
-    ["Sans"] = "rbxassetid://3188795283",
     ["Gamesense"] = "rbxassetid://4817809188",
     ["Neverlose"] = "rbxassetid://8726881116",
-    ["Ding"] = "rbxassetid://2868331684",
     ["Osu"] = "rbxassetid://7151989073",
     ["TF2"] = "rbxassetid://8255306220",
+    ["One"] = "rbxassetid://7380502345",
+    ["Weeb"] = "rbxassetid://6442965016",
+    ["Bubble"] = "rbxassetid://6534947588",
+    ["Pop"] = "rbxassetid://198598793",
+    ["Minecraft experience"] = "rbxassetid://7151570575",
 }
 
 local function createTracer(origin, target)
@@ -10276,16 +11178,16 @@ local function createTracer(origin, target)
 
     local b = Instance.new("Beam")
     b.Attachment0, b.Attachment1 = a0, a1
-    b.Color = ColorSequence.new(tracerCfg.color)
+    b.Color = ColorSequence.new(FX.tracer.color)
     b.Width0, b.Width1, b.Brightness, b.LightEmission, b.FaceCamera = 0.3, 0.3, 100, 1, true
     b.Texture, b.TextureLength, b.TextureSpeed, b.Parent = "rbxassetid://446111271", 5, 3, m
 
-    Debris:AddItem(m, tracerCfg.duration)
+    Debris:AddItem(m, FX.tracer.duration)
 end
 
 local function playHitSound()
     local s = Instance.new("Sound")
-    s.SoundId, s.Volume, s.Parent = hitSoundCfg.soundId, hitSoundCfg.volume, workspace
+    s.SoundId, s.Volume, s.Parent = FX.hitSound.soundId, FX.hitSound.volume, workspace
     s:Play()
     Debris:AddItem(s, 3)
 end
@@ -10301,11 +11203,11 @@ mt.__namecall = newcclosure(function(self, ...)
     local method = getnamecallmethod()
     local args = {...}
     
-    if self == hit and method == "FireServer" and tracerCfg.enabled and args[1] and typeof(args[1]) == "Vector3" then
+    if self == hit and method == "FireServer" and FX.tracer.enabled and args[1] and typeof(args[1]) == "Vector3" then
         task.spawn(createTracer, camera.CFrame.Position, args[1])
     end
     
-    if self == damage and method == "FireServer" and hitSoundCfg.enabled then
+    if self == damage and method == "FireServer" and FX.hitSound.enabled then
         task.spawn(playHitSound)
     end
     
@@ -10319,7 +11221,7 @@ t = Skin2Section:Toggle({
     Name = "Bullet Tracer",
     Flag = "BulletTracer_Enabled",
     Default = false,
-    Callback = function(v) tracerCfg.enabled = v end
+    Callback = function(v) FX.tracer.enabled = v end
 })
 
 t:Colorpicker({
@@ -10327,7 +11229,7 @@ t:Colorpicker({
     Flag = "TracerColor",
     Default = Color3.fromRGB(255, 255, 255),
     Alpha = 0,
-    Callback = function(v) tracerCfg.color = v end
+    Callback = function(v) FX.tracer.color = v end
 })
 
 Skin2Section:Slider({
@@ -10338,7 +11240,7 @@ Skin2Section:Slider({
     Max = 10,
     Default = 4,
     Decimals = 0.5,
-    Callback = function(v) tracerCfg.duration = v end
+    Callback = function(v) FX.tracer.duration = v end
 })
 
 
@@ -10347,7 +11249,7 @@ Skin2Section:Toggle({
     Name = "Hit Sound",
     Flag = "HitSound_Enabled",
     Default = false,
-    Callback = function(v) hitSoundCfg.enabled = v end
+    Callback = function(v) FX.hitSound.enabled = v end
 })
 
 Skin2Section:Dropdown({
@@ -10355,8 +11257,8 @@ Skin2Section:Dropdown({
     Flag = "HitSound",
     Default = "UwU",
     Multi = false,
-    Items = {"Bameware", "Senpai", "Fatality", "UwU", "Rust", "Sans", "Gamesense", "Neverlose", "Ding", "Osu", "TF2"},
-    Callback = function(v) hitSoundCfg.soundId = sounds[v] end
+    Items = {"Senpai", "Fatality", "UwU", "Rust", "Gamesense", "Neverlose", "Osu", "TF2", "One", "Weeb", "Bubble", "Pop", "Minecraft experience"},
+    Callback = function(v) FX.hitSound.soundId = sounds[v] end
 })
 
 Skin2Section:Slider({
@@ -10367,8 +11269,252 @@ Skin2Section:Slider({
     Max = 10,
     Default = 2,
     Decimals = 0.1,
-    Callback = function(v) hitSoundCfg.volume = v end
+    Callback = function(v) FX.hitSound.volume = v end
 })
+
+        AuSubPage = AuPage:SubPage({Name = "AutoFarm", Columns = 2}) 
+
+        AuSection = AuSubPage:Section({Name = "Concierge", Side = 1}) 
+
+
+
+-- ============================================================
+-- AUTO FARM CONCIERGE - Complet avec Stats
+-- ============================================================
+local AF = {Active = false, Connection = nil, SpinConnection = nil, SpawnPos = Vector3.new(-636, 5, 463)}
+
+local function HasBalai()
+    -- Cherche dans le Backpack
+    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, "Balai") then
+            return tool
+        end
+    end
+    -- Cherche dans le Character
+    local char = LocalPlayer.Character
+    if char then
+        for _, tool in ipairs(char:GetChildren()) do
+            if tool:IsA("Tool") and string.find(tool.Name, "Balai") then
+                return tool
+            end
+        end
+    end
+    return nil
+end
+
+local function IsAgentEntretien()
+    return LocalPlayer.Team and LocalPlayer.Team.Name == "AgentEntretien"
+end
+
+local function GetAllTaches()
+    local folder = Workspace:FindFirstChild("Tache")
+    if not folder then return {} end
+    local result = {}
+    for _, desc in ipairs(folder:GetDescendants()) do
+        if desc:IsA("BasePart") and desc.Name == "Tache" then
+            table.insert(result, desc)
+        end
+    end
+    return result
+end
+
+local function StopAutoFarmConcierge()
+    AF.Active = false
+    
+    if AF.SpinConnection then
+        AF.SpinConnection:Disconnect()
+        AF.SpinConnection = nil
+    end
+    
+    -- Destroy GUI
+    local farmGui = CoreGui:FindFirstChild("AutoFarmConciergeGui")
+    if farmGui then
+        farmGui:Destroy()
+    end
+    
+    Library:Notification("Auto Farm", "Auto Farm Arrete", 5)
+end
+
+local function StartAutoFarmConcierge()
+    if not IsAgentEntretien() then
+        Library:Notification("Auto Farm", "Tu n'es pas AgentEntretien", 5)
+        return
+    end
+    
+    AF.Active = true
+    
+    -- GUI groupé dans une table
+    local gui = {}
+    gui.farmGui = Instance.new("ScreenGui")
+    gui.farmGui.Name = "AutoFarmConciergeGui"
+    gui.farmGui.ResetOnSpawn = false
+    gui.farmGui.DisplayOrder = 2147483647
+    gui.farmGui.IgnoreGuiInset = true
+    gui.farmGui.Parent = CoreGui
+    
+    gui.bgFrame = Instance.new("Frame")
+    gui.bgFrame.Size = UDim2.new(1, 0, 1, 0)
+    gui.bgFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    gui.bgFrame.BackgroundTransparency = 0.5
+    gui.bgFrame.BorderSizePixel = 0
+    gui.bgFrame.Parent = gui.farmGui
+    
+    -- Créer labels en table
+    local function CreateLabel(text, posY, color)
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(0.5, 0, 0.07, 0)
+        lbl.Position = UDim2.new(0.25, 0, posY, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = text
+        lbl.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+        lbl.TextScaled = true
+        lbl.Font = Enum.Font.GothamBold
+        lbl.TextStrokeTransparency = 0
+        lbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        lbl.Parent = gui.bgFrame
+        return lbl
+    end
+    
+    -- Labels dans une table
+    local labels = {
+        title = CreateLabel("Auto Farm Neptune", 0.05, Color3.fromRGB(255, 255, 255)),
+        startMoney = CreateLabel("Depart: 0 $", 0.15, Color3.fromRGB(200, 200, 200)),
+        currentMoney = CreateLabel("Actuel: 0 $", 0.25, Color3.fromRGB(255, 255, 100)),
+        gain = CreateLabel("Gagne: +0 $", 0.35, Color3.fromRGB(100, 255, 100)),
+        timer = CreateLabel("Temps: 00:00:00", 0.45, Color3.fromRGB(150, 200, 255)),
+        tache = CreateLabel("Tache: 0 / 0", 0.55, Color3.fromRGB(200, 150, 255))
+    }
+    
+    -- Bouton
+    gui.toggleBtn = Instance.new("TextButton")
+    gui.toggleBtn.Size = UDim2.new(0.8, 0, 0.15, 0)
+    gui.toggleBtn.Position = UDim2.new(0.1, 0, 0.80, 0)
+    gui.toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    gui.toggleBtn.BorderSizePixel = 0
+    gui.toggleBtn.Text = "Pour stop le autofarm\nfaut re cliquer sur le toggle"
+    gui.toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    gui.toggleBtn.TextSize = 10
+    gui.toggleBtn.TextScaled = true
+    gui.toggleBtn.Font = Enum.Font.GothamBold
+    gui.toggleBtn.Parent = gui.bgFrame
+    SetCorner(gui.toggleBtn, 14)
+    
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = Color3.fromRGB(255, 100, 100)
+    btnStroke.Thickness = 3
+    btnStroke.Parent = gui.toggleBtn
+    
+    gui.toggleBtn.MouseButton1Click:Connect(function()
+        task.wait(0.1)
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then 
+            hrp.CFrame = CFrame.new(FARM_SPAWN_POSITION) 
+        end
+        Library.Flags["AutoFarmConcierge"] = false
+    end)
+    
+    -- Stats groupées
+    local stats = {
+        startMoney = LocalPlayer:GetAttribute("Argent") or 0,
+        startTick = tick()
+    }
+    labels.startMoney.Text = "Depart: " .. stats.startMoney .. " $"
+    labels.currentMoney.Text = "Actuel: " .. stats.startMoney .. " $"
+    
+    -- Spin
+    AF.SpinConnection = RunService.RenderStepped:Connect(function()
+        if not AF.Active then return end
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(15), 0)
+        end
+    end)
+    
+    -- Argent update
+    LocalPlayer:GetAttributeChangedSignal("Argent"):Connect(function()
+        if not AF.Active then return end
+        local current = LocalPlayer:GetAttribute("Argent") or 0
+        labels.currentMoney.Text = "Actuel: " .. current .. " $"
+        labels.gain.Text = "Gagne: +" .. (current - stats.startMoney) .. " $"
+    end)
+    
+    -- Remote
+    local remote = ReplicatedStorage:WaitForChild("Charpente_Partage"):WaitForChild("RemoteEvent"):WaitForChild("Tool"):WaitForChild("BalaisRemote")
+    
+    Library:Notification("Auto Farm", "Auto Farm Active", 5)
+    
+    -- Fonction pour toutes les taches
+    local function DoAllTaches()
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        
+        local taches = GetAllTaches()
+        if #taches == 0 then 
+            labels.tache.Text = "Aucune tache trouvee"
+            return 
+        end
+        
+        local balai = HasBalai()
+        if not balai then return end
+        
+        for i, tache in ipairs(taches) do
+            if not AF.Active then break end
+            labels.tache.Text = "Tache: " .. i .. " / " .. #taches
+            hrp.CFrame = CFrame.new(tache.Position + Vector3.new(0, 3, 0))
+            pcall(function() remote:FireServer(balai, hrp.CFrame) end)
+            task.wait(0.5)
+        end
+    end
+    
+    -- Boucle principale
+    AF.Connection = task.spawn(function()
+        while AF.Active do
+            DoAllTaches()
+            if AF.Active then
+                labels.tache.Text = "Retour au spawn..."
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    hrp.CFrame = CFrame.new(AF.SpawnPos)
+                end
+                task.wait(0.5)
+            end
+        end
+    end)
+    
+    -- Timer
+    task.spawn(function()
+        while AF.Active do
+            local elapsed = tick() - stats.startTick
+            labels.timer.Text = string.format("Temps: %02d:%02d:%02d",
+                math.floor(elapsed / 3600),
+                math.floor((elapsed % 3600) / 60),
+                math.floor(elapsed % 60)
+            )
+            task.wait(1)
+        end
+    end)
+end
+    Camera = Workspace.CurrentCamera
+
+AuSection:Toggle({
+    Name = "Auto Farm Concierge",
+    Flag = "AutoFarmConcierge",
+    Default = false,
+    Callback = function(v)
+        if v then
+            StartAutoFarmConcierge()
+        else
+            StopAutoFarmConcierge()
+        end
+    end
+})
+
+
+
+
+
+
+
 
 
 
@@ -10450,6 +11596,11 @@ end)
 TpSection:Button():Add("Badge MP5 ", function()
 	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(378.00, 1.00, 2485.00)
 	library:SendNotification("Téléporté Badge", 5, Color3.new(0, 1, 0))
+end)
+
+TpSection:Button():Add("Ic Ez", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-681, 5, 384)
+	library:SendNotification("Téléporté Ic Ez", 5, Color3.new(0, 1, 0))
 end)
 
 
