@@ -7105,7 +7105,6 @@ Toggle:Colorpicker({
 
 
 
-
 SilentAimSection = AimbotSubPage:Section({Name = "Silent Aim", Side = 2}) do 
 
 
@@ -7124,8 +7123,7 @@ local Config = {
     ShowTargetText = false,
     Snapline = false,
     DebugWallbang = false,
-    IgnoreStaff = false,
-    FovCenter = false
+    IgnoreStaff = false
 }
 
 _G.knownStaff = _G.knownStaff or {}
@@ -7168,16 +7166,8 @@ RaycastWhitelist.FilterType = Enum.RaycastFilterType.Include
 
 RunService.RenderStepped:Connect(function()
     if Config.Enabled and Config.ShowFOVCircle then
-        local circlePos
-        if Config.FovCenter then
-            local screenSize = LocalPlayer:GetMouse().ViewSizeX, LocalPlayer:GetMouse().ViewSizeY
-            local viewportSize = Workspace.CurrentCamera.ViewportSize
-            circlePos = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
-        else
-            local mousePos = UserInputService:GetMouseLocation()
-            circlePos = Vector2.new(mousePos.X, mousePos.Y)
-        end
-        FOVCircle.Position = circlePos
+        local mousePos = UserInputService:GetMouseLocation()
+        FOVCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
         FOVCircle.Radius = Config.FOV
         FOVCircle.Visible = true
     else
@@ -7419,13 +7409,7 @@ SilentAimSection:Toggle({
 })
 
 
-SilentAimSection:Toggle({
-    Name = "Fov Center",
-    Default = false,
-    Callback = function(v)
-        Config.FovCenter = v
-    end
-})
+
 
 SilentAimSection:Toggle({
     Name = "Wall Check",
@@ -7436,18 +7420,6 @@ SilentAimSection:Toggle({
     end
 })
 
-
-
-SilentAimSection:Toggle({
-    Name = "TeamCheck",
-    Flag = "TeamCheck",
-    Default = false,
-    Callback = function(v)
-        Config.TeamCheck = v
-    end
-})
-
-
 SilentAimSection:Toggle({
     Name = "Wallbang",
     Flag = "Wallbang",
@@ -7457,7 +7429,14 @@ SilentAimSection:Toggle({
     end
 })
 
-
+SilentAimSection:Toggle({
+    Name = "TeamCheck",
+    Flag = "TeamCheck",
+    Default = false,
+    Callback = function(v)
+        Config.TeamCheck = v
+    end
+})
 
 SilentAimSection:Toggle({
     Name = "Show Target Text",
@@ -7493,7 +7472,7 @@ SilentAimSection:Toggle({
     end
 })
 
-local invInspectorEnabled = _G.Site43.features.invInspectorEnabled
+local invInspectorEnabled = false
 local lastInspectedPlayer = nil
 
 local invUI = {}
@@ -7688,7 +7667,7 @@ end
 
 task.spawn(function()
     while task.wait(0.15) do
-        if _G.Site43.features.invInspectorEnabled and Config.Enabled and _G.TargetedPlayer then
+        if invInspectorEnabled and Config.Enabled and _G.TargetedPlayer then
             updateTargetedPlayerInfo(_G.TargetedPlayer)
             lastInspectedPlayer = _G.TargetedPlayer
         else
@@ -7703,7 +7682,7 @@ SilentAimSection:Toggle({
     Flag = "InvInspector",
     Default = false,
     Callback = function(v)
-        _G.Site43.features.invInspectorEnabled = v
+        invInspectorEnabled = v
         if not v then
             invUI.main.Visible = false
             lastInspectedPlayer = nil
@@ -8487,7 +8466,7 @@ AntiiiSection:Toggle({
             if CFV.conn then CFV.conn:Disconnect() end
             CFV.conn = RunService.RenderStepped:Connect(function()
                 if _G.Site43.features.changeFovEnabled and not FOV.zoomHeld then
-                    workspace.CurrentCamera.FieldOfView = normalFOV
+                    workspace.CurrentCamera.FieldOfView = FOV.normalFOV
                 end
             end)
         else
