@@ -9972,7 +9972,7 @@ GunSection:Toggle({Name = "Inf Ammo", Flag = "InfAmmo", Default = false, Callbac
     end
 end})
 GunSection:Toggle({Name = "Rapid Fire", Flag = "RapidFire", Default = false, Callback = function(v) toggles.rapidFire = v end})
-GunSection:Toggle({Name = "Fire Rate Inf", Flag = "FireRateInf", Default = false, Callback = function(v) toggles.fireRateInf = v end})
+-- GunSection:Toggle({Name = "Fire Rate Inf", Flag = "FireRateInf", Default = false, Callback = function(v) toggles.fireRateInf = v end})
 
 Button = GunSection:Button()
 Button:Add("Apply Modif", applyWeaponSettings)
