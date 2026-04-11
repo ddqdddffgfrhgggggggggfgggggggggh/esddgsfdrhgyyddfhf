@@ -9454,7 +9454,7 @@ ExploitSection:Button():Add("Give Helmet", function()
     end
 end)
 
-ExploitSection:Button():Add("Bypass Pluton Anticheat", function()
+ExploitSection:Button():Add("DONT CLICK HERE", function()
 
 Site43Lib = {}
 
