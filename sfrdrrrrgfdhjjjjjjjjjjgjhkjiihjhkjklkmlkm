@@ -2297,12 +2297,54 @@ local Library do
                 Items["Slider"].Instance.Visible = Bool
             end
 
+            function Slider:SetRange(Min, Max)
+                local minValue = tonumber(Min) or 0
+                local maxValue = tonumber(Max) or minValue
+                if maxValue < minValue then
+                    maxValue = minValue
+                end
+
+                Data.Min = minValue
+                Data.Max = maxValue
+
+                local current = Slider.Value
+                if current == nil or current < Data.Min then
+                    Slider:Set(Data.Min)
+                elseif current > Data.Max then
+                    Slider:Set(Data.Max)
+                end
+            end
+
             function Slider:Set(Value)
-                Slider.Value = Library:Round(MathClamp(Value, Data.Min, Data.Max), Data.Decimals)
+                local minValue = tonumber(Data.Min) or 0
+                local maxValue = tonumber(Data.Max) or minValue
+                if minValue ~= minValue then
+                    minValue = 0
+                end
+                if maxValue ~= maxValue then
+                    maxValue = minValue
+                end
+                if maxValue < minValue then
+                    maxValue = minValue
+                end
+
+                local clampedValue = tonumber(Value) or Value
+                if type(clampedValue) ~= "number" then
+                    clampedValue = minValue
+                end
+                if clampedValue < minValue then
+                    clampedValue = minValue
+                elseif clampedValue > maxValue then
+                    clampedValue = maxValue
+                end
+
+                Slider.Value = Library:Round(clampedValue, Data.Decimals)
 
                 Library.Flags[Slider.Flag] = Slider.Value
 
-                Items["Accent"]:Tween(TweenInfo.new(Library.Tween.Time, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2New((Slider.Value - Data.Min) / (Data.Max - Data.Min), 0, 1, 0)})
+                local range = maxValue - minValue
+                local ratio = range == 0 and 1 or ((Slider.Value - minValue) / range)
+                Items["Accent"]:Tween(TweenInfo.new(Library.Tween.Time, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2New(ratio, 0, 1, 0)})
                 Items["Value"].Instance.Text = StringFormat("%s%s", tostring(Slider.Value), Data.Suffix)
 
                 if Data.Callback then 
@@ -9454,187 +9496,6 @@ ExploitSection:Button():Add("Give Helmet", function()
     end
 end)
 
-ExploitSection:Button():Add("DONT CLICK HERE", function()
-
-Site43Lib = {}
-
-function Site43Lib:BrickAntiCheat()
-    if game:GetService("ReplicatedStorage"):FindFirstChild("PlutonMessager") then
-        local Old
-        Old = hookmetamethod(game, "__namecall", newcclosure(function(Self, ...)
-            local Method = getnamecallmethod()
-            if Method == "FireServer" and Self.Name == "PlutonMessager" then
-                print("Niquer un call de l'anti cheat bg")
-                return nil
-            end
-            return Old(Self, ...)
-        end))
-
-        RecoveredAntiCheat = nil 
-
-        for _, v in pairs(getnilinstances()) do 
-            if v.ClassName == 'LocalScript' and v.Name == 'Pluton_Client' then
-                RecoveredAntiCheat = v
-                break
-            end
-        end
-        
-        for _, i in pairs(getgc(true)) do 
-            if typeof(i) == 'function' then 
-                functioninfo = debug.getinfo(i)
-
-                if not functioninfo then continue end
-
-                if functioninfo.name == 'PhysicalPunish' or functioninfo.name == 'ClearRS' or functioninfo.name == 'onSuspectGui' or functioninfo.name == 'SearchGUI' then 
-                    print("Patching "..functioninfo.name)
-                    hookfunction(i, function() 
-                        return
-                    end)
-                else
-                    if functioninfo.name == 'CheckGui' then
-                        print("Patching "..functioninfo.name) 
-                        hookfunction(i, function() 
-                            return true
-                        end)
-                    end
-                end
-            end
-        end
-
-        MessagerDestroyed = game:GetService("ReplicatedStorage"):WaitForChild("ACS_Engine", 10) and game:GetService("ReplicatedStorage").ACS_Engine:WaitForChild("Kick") or game:GetService("ReplicatedStorage"):WaitForChild("Kick")
-
-        PatchListOne = getconnections(game:GetService("ReplicatedStorage"):WaitForChild("PlutonMessager").AncestryChanged)
-        PatchListTwo = getconnections(MessagerDestroyed:GetPropertyChangedSignal("Parent"))
-
-        for _, connection in pairs(PatchListOne) do 
-            print("Patching AncestryChanged")
-            connection:Disable()
-        end
-
-        for _, connection in pairs(PatchListTwo) do 
-            print("Patching GetPropertyChangedSignal")
-            connection:Disable()
-        end
-
-        spawn(function()
-            local properties = {
-                "CanCollide",
-                "RotVelocity", 
-                "Velocity",
-                "AssemblyLinearVelocity",
-                "AssemblyAngularVelocity"
-            }
-            
-            local bodyParts = {"HumanoidRootPart", "Torso", "Head"}
-            
-            local function PatchPart(part, partName)
-                for _, property in ipairs(properties) do
-                    local connections = getconnections(part:GetPropertyChangedSignal(property))
-                    for _, connection in ipairs(connections) do
-                        connection:Disable()
-                    end
-                end
-            end
-            
-            while wait(1) do
-                pcall(function()
-                    local char = game.Players.LocalPlayer.Character
-                    if char then
-                        for _, partName in ipairs(bodyParts) do
-                            local part = char:FindFirstChild(partName)
-                            if part then
-                                PatchPart(part, partName)
-                            end
-                            task.wait(1)
-                        end
-                    end
-                end)
-            end
-        end)
-
-        game:GetService("ReplicatedStorage"):FindFirstChild("PlutonMessager"):Destroy()
-
-
-        local getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller, lower, gsub, match = getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller, string.lower, string.gsub, string.match
-
-
-        if getgenv().ED_AntiKick then
-            return
-        end
-
-
-        local cloneref = cloneref or function(...) 
-            return ...
-        end
-
-        local clonefunction = clonefunction or function(...)
-            return ...
-        end
-
-        local Players, LocalPlayer, StarterGui = cloneref(game:GetService("Players")), cloneref(game:GetService("Players").LocalPlayer), cloneref(game:GetService("StarterGui"))
-
-        local SetCore = clonefunction(StarterGui.SetCore)
-        --local GetDebugId = clonefunction(game.GetDebugId)
-        local FindFirstChild = clonefunction(game.FindFirstChild)
-
-        local CompareInstances = (CompareInstances and function(Instance1, Instance2)
-                if typeof(Instance1) == "Instance" and typeof(Instance2) == "Instance" then
-                    return CompareInstances(Instance1, Instance2)
-                end
-            end)
-        or
-        function(Instance1, Instance2)
-            return (typeof(Instance1) == "Instance" and typeof(Instance2) == "Instance")-- and GetDebugId(Instance1) == GetDebugId(Instance2)
-        end
-
-        local CanCastToSTDString = function(...)
-            return pcall(FindFirstChild, game, ...)
-        end
-
-        --// Global Variables
-
-        getgenv().ED_AntiKick = {
-            Enabled = true, -- Set to false if you want to disable the Anti-Kick.
-            SendNotifications = false, -- Set to true if you want to get notified for every event.
-            CheckCaller = true -- Set to true if you want to disable kicking by other user executed scripts.
-        }
-
-        --// Main
-
-        local OldNamecall; OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(...)
-            local self, message = ...
-            local method = getnamecallmethod()
-            
-            if ((getgenv().ED_AntiKick.CheckCaller and not checkcaller()) or true) and CompareInstances(self, LocalPlayer) and gsub(method, "^%l", string.upper) == "Kick" and ED_AntiKick.Enabled then
-                if CanCastToSTDString(message) then
-
-                    return
-                end
-            end
-
-            return OldNamecall(...)
-        end))
-
-        local OldFunction; OldFunction = hookfunction(LocalPlayer.Kick, function(...)
-            local self, Message = ...
-
-            if ((ED_AntiKick.CheckCaller and not checkcaller()) or true) and CompareInstances(self, LocalPlayer) and ED_AntiKick.Enabled then
-                if CanCastToSTDString(Message) then
-                    return
-                end
-            end
-        end)
-
-    end
-end
-
-
-Site43Lib:BrickAntiCheat()
-
-
-
-
-end)
 
 
 
@@ -9954,6 +9815,33 @@ local armeSelectionnee = _G.Site43.gunMods.armeSelectionnee
 
 local settings = _G.Site43.gunMods.settings
 local toggles = _G.Site43.gunMods.toggles
+local BulletSpeedSlider
+
+local function getSelectedWeaponSettings()
+    local backpack = player:FindFirstChild("Backpack")
+    if not backpack or not armeSelectionnee then return nil end
+    local arme = backpack:FindFirstChild(armeSelectionnee) or (player.Character and player.Character:FindFirstChild(armeSelectionnee))
+    if not arme or not arme:FindFirstChild("ACS_Modulo") then return nil end
+    local settingsModule = arme.ACS_Modulo:FindFirstChild("Variaveis") and arme.ACS_Modulo.Variaveis:FindFirstChild("Settings")
+    if not settingsModule or not settingsModule:IsA("ModuleScript") then return nil end
+    local success, weaponSettings = pcall(function() return require(settingsModule) end)
+    if not success or type(weaponSettings) ~= "table" then return nil end
+    return weaponSettings
+end
+
+local function updateBulletSpeedSlider()
+    if not BulletSpeedSlider then return end
+    local weaponSettings = getSelectedWeaponSettings()
+    local baseBSpeed = tonumber((weaponSettings and weaponSettings.BSpeed) or settings.bulletSpeed) or 1
+    local minSpeed = baseBSpeed
+    local maxSpeed = 5000
+    if minSpeed > maxSpeed then
+        maxSpeed = minSpeed
+    end
+    BulletSpeedSlider:SetRange(minSpeed, maxSpeed)
+    BulletSpeedSlider:Set(baseBSpeed)
+    settings.bulletSpeed = baseBSpeed
+end
 
 local function applyInfAmmo()
 	if not toggles.infAmmo then return end
@@ -10021,6 +9909,9 @@ local function applyWeaponSettings()
 				weaponSettings.MinRecoilPower = 0 
 				weaponSettings.MaxRecoilPower = 0 
 				weaponSettings.RecoilPowerStepAmount = 0 
+                weaponSettings.SwayBase = 0 
+                weaponSettings.WalkMultiplier = 0
+                weaponSettings.AimInaccuracyStepAmount = 0
 				weaponSettings.CanBreak = false
 			end
 
@@ -10028,6 +9919,8 @@ local function applyWeaponSettings()
 				weaponSettings.VRecoil = {0, 0}
 				weaponSettings.HRecoil = {0, 0}
 				weaponSettings.RecoilPunch = 0
+
+
 			end
 
 			weaponSettings.Distance = toggles.infiniteRange and math.huge or settings.maxDistance
@@ -10119,18 +10012,19 @@ GunSection:Slider({
     end
 })
 
-GunSection:Slider({
-    Name = "Gun Size",
-    Flag = "GunSize_Slider",
-    Min = 0.1,
-    Max = 5,
+BulletSpeedSlider = GunSection:Slider({
+    Name = "Bullet Speed",
+    Flag = "BulletSpeed_Slider",
+    Min = 1,
+    Max = 5000,
     Default = 1,
-    Decimals = 1,
-    Suffix = "x",
+    Decimals = 10,
+    Suffix = " BSpeed",
     Callback = function(v)
-        settings.gunSize = v
+        settings.bulletSpeed = v
     end
 })
+updateBulletSpeedSlider()
 
 GunSection:Toggle({Name = "No Spread", Flag = "NoSpread", Default = false, Callback = function(v) toggles.noSpread = v end})
 GunSection:Toggle({Name = "No Recoil", Flag = "NoRecoil", Default = false, Callback = function(v) toggles.noRecoil = v end})
@@ -10183,6 +10077,7 @@ GunnSection:Searchbox({
     Default = nil,
     Callback = function(Value)
         armeSelectionnee = Value
+        updateBulletSpeedSlider()
         -- Auto-apply weapon settings when selection is restored from config
         if armeSelectionnee and armeSelectionnee ~= "" then
             task.defer(applyWeaponSettings)
@@ -11350,16 +11245,19 @@ TpSection:Button():Add("Zone Class D", function()
 	library:SendNotification("Téléporté Zone Class D", 5, Color3.new(0, 1, 0))
 end)
 
-
+TpSection:Button():Add("Téléportation Vent Gate B", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1133, 16, 878)
+	library:SendNotification("Téléporté Vent Gate B", 5, Color3.new(0, 1, 0))
+end)
 
 TpSection:Button():Add("Téléportation IC", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-561.77, -111.66, 2692.34)
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1728, -45, 2720)
 	library:SendNotification("Téléporté Zone IC", 5, Color3.new(0, 1, 0))
 end)
 
-TpSection:Button():Add("Téléportation IC 2", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-519.87, -110.12, 2646.57)
-	library:SendNotification("Téléporté Zone IC 2", 5, Color3.new(0, 1, 0))
+TpSection:Button():Add("Téléportation Salle Générateur", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1047, 5, 739)
+	library:SendNotification("Téléporté Zone Générateur", 5, Color3.new(0, 1, 0))
 end)
 
 TpSection:Button():Add("Spawn UT", function()
