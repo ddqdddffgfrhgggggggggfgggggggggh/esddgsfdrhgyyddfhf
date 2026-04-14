@@ -9854,8 +9854,8 @@ DesyncSection:Slider({
 -- Regrouper Gun Mods config
 _G.Site43.gunMods = _G.Site43.gunMods or {
     armeSelectionnee = nil,
-    settings = {degats = 20, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1},
-    toggles = {noSpread = false, noRecoil = false, infiniteRange = false, maxBulletSpeed = false,
+    settings = {degats = 20, maxDistance = 1000, gunSize = 1, bullets = 1},
+    toggles = {noSpread = false, noRecoil = false, infiniteRange = false,
                noBulletDrop = false, maxPenetration = false, infAmmo = false, rapidFire = false, fireRateInf = false}
 }
 
@@ -9864,7 +9864,6 @@ local armeSelectionnee = _G.Site43.gunMods.armeSelectionnee
 
 local settings = _G.Site43.gunMods.settings
 local toggles = _G.Site43.gunMods.toggles
-local BulletSpeedSlider
 
 local function getSelectedWeaponSettings()
     local backpack = player:FindFirstChild("Backpack")
@@ -9878,19 +9877,7 @@ local function getSelectedWeaponSettings()
     return weaponSettings
 end
 
-local function updateBulletSpeedSlider()
-    if not BulletSpeedSlider then return end
-    local weaponSettings = getSelectedWeaponSettings()
-    local baseBSpeed = tonumber((weaponSettings and weaponSettings.BSpeed) or settings.bulletSpeed) or 1
-    local minSpeed = baseBSpeed
-    local maxSpeed = 5000
-    if minSpeed > maxSpeed then
-        maxSpeed = minSpeed
-    end
-    BulletSpeedSlider:SetRange(minSpeed, maxSpeed)
-    BulletSpeedSlider:Set(baseBSpeed)
-    settings.bulletSpeed = baseBSpeed
-end
+
 
 local function applyInfAmmo()
 	if not toggles.infAmmo then return end
@@ -9973,7 +9960,6 @@ local function applyWeaponSettings()
 			end
 
 			weaponSettings.Distance = toggles.infiniteRange and math.huge or settings.maxDistance
-			weaponSettings.BSpeed = toggles.maxBulletSpeed and math.huge or settings.bulletSpeed
 			weaponSettings.BDrop = toggles.noBulletDrop and 0 or weaponSettings.BDrop
 			weaponSettings.BulletPenetration = toggles.maxPenetration and math.huge or weaponSettings.BulletPenetration
 
@@ -10062,19 +10048,7 @@ GunSection:Slider({
    -- end
 --})
 
-BulletSpeedSlider = GunSection:Slider({
-    Name = "Bullet Speed",
-    Flag = "BulletSpeed_Slider",
-    Min = 1,
-    Max = 5000,
-    Default = 1,
-    Decimals = 10,
-    Suffix = " BSpeed",
-    Callback = function(v)
-        settings.bulletSpeed = v
-    end
-})
-updateBulletSpeedSlider()
+
 
 GunSection:Toggle({Name = "No Spread", Flag = "NoSpread", Default = false, Callback = function(v) toggles.noSpread = v end})
 GunSection:Toggle({Name = "No Recoil", Flag = "NoRecoil", Default = false, Callback = function(v) toggles.noRecoil = v end})
@@ -10093,8 +10067,8 @@ GunSection:Toggle({Name = "Rapid Fire", Flag = "RapidFire", Default = false, Cal
 Button = GunSection:Button()
 Button:Add("Apply Modif", applyWeaponSettings)
 Button:Add("Reset Modif", function()
-    _G.Site43.gunMods.settings = {degats = 100, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1}
-    _G.Site43.gunMods.toggles = {noSpread = false, noRecoil = false, infiniteRange = false, maxBulletSpeed = false, noBulletDrop = false, maxPenetration = false, infAmmo = false, rapidFire = false, fireRateInf = false}
+    _G.Site43.gunMods.settings = {degats = 100, maxDistance = 1000, gunSize = 1, bullets = 1}
+    _G.Site43.gunMods.toggles = {noSpread = false, noRecoil = false, infiniteRange = false, noBulletDrop = false, maxPenetration = false, infAmmo = false, rapidFire = false, fireRateInf = false}
     settings = _G.Site43.gunMods.settings
     toggles = _G.Site43.gunMods.toggles
     Library:Notification("Reset", "Modifications réinitialisées", 3)
@@ -10127,7 +10101,6 @@ GunnSection:Searchbox({
     Default = nil,
     Callback = function(Value)
         armeSelectionnee = Value
-        updateBulletSpeedSlider()
         if armeSelectionnee and armeSelectionnee ~= "" then
             task.defer(applyWeaponSettings)
         end
