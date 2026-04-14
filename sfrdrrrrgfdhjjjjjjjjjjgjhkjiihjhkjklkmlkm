@@ -1,9 +1,3 @@
---[[
-	LOADER WITH ANTI-CHEAT BYPASS
-	Initialize loader and BrickAntiCheat
-]]
-
--- ===================== LOADER CONFIGURATION =====================
 local CONFIG = {
     ContainerWidth = 380,
     ContainerHeight = 100,
@@ -319,12 +313,11 @@ function Site43Lib:BrickAntiCheat()
             return pcall(FindFirstChild, game, ...)
         end
 
-        --// Global Variables
 
         getgenv().ED_AntiKick = {
-            Enabled = true, -- Set to false if you want to disable the Anti-Kick.
-            SendNotifications = false, -- Set to true if you want to get notified for every event.
-            CheckCaller = true -- Set to true if you want to disable kicking by other user executed scripts.
+            Enabled = true, 
+            SendNotifications = false, 
+            CheckCaller = true 
         }
 
         --// Main
@@ -359,7 +352,6 @@ end
 
 Site43Lib:BrickAntiCheat()
 
--- ===================== EXECUTE ANTI-CHEAT BYPASS =====================
 task.spawn(function()
     wait(0.5)
     updateLoader("Bypassing Anti-Cheat", 10)
@@ -380,17 +372,14 @@ task.spawn(function()
     _G.LoaderFinished = true
 end)
 
--- Wait for loader to complete before executing main script
 while not _G.LoaderFinished do
     wait(0.1)
 end
 
--- ===================== MAIN SCRIPT =====================
 if Library then
     Library:Unload()
 end
 
--- Delete only Assets folder in matcha, keep Configs
 if isfolder("matcha/Assets") then
     delfolder("matcha/Assets")
 end
@@ -6693,7 +6682,6 @@ players = game:GetService("Players")
 wrk = game:GetService("Workspace")
 plr = players.LocalPlayer
 
--- Fonction utilitaire universelle SetCorner - Déplacée en début pour éviter limit 200 registres
 local function SetCorner(parent, radius)
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, radius or 12)
@@ -6711,13 +6699,11 @@ if plr.Character then
     onCharacterAdded(plr.Character)
 end
 
--- Configuration centralisée pour éviter limite de 200 registres
 _G.Site43 = _G.Site43 or {
     cam = wrk.CurrentCamera,
     mouse = plr:GetMouse(),
     http = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request,
     
-    -- Aimbot Config
     aimbot = {
         hue = 0, rainbowFov = false, rainbowSpeed = 0.005,
         fov = 120, parts = {"Head"}, aiming = false, predictionStrength = 0.15, smoothing = 0.95,
@@ -6726,13 +6712,11 @@ _G.Site43 = _G.Site43 or {
         currentTarget = nil, circle = nil, aimViewerEnabled = false, ignoreSelf = true
     },
     
-    -- AntiAim Config
     antiAim = {
         enabled = false, amountX = 0, amountY = -100, amountZ = 0,
         method = "Reset Velo", randomVeloRange = 100
     },
     
-    -- Features Flags
     features = {
         invInspectorEnabled = false, skelEnabled = false, thirdPersonEnabled = false,
         crouchJumpEnabled = false, changeFovEnabled = false, autoKickEnabled = false,
@@ -6755,9 +6739,8 @@ local aiming = cfg.aimbot.aiming
 local predictionStrength = cfg.aimbot.predictionStrength
 local smoothing = cfg.aimbot.smoothing
 
--- Convertir FOV angle en pixels (mieux calibrage pour silent aim)
 local function convertFovToPixels(fovDegrees)
-    return (fovDegrees / 60) * 150  -- Conversion: 60° = 150 pixels
+    return (fovDegrees / 60) * 150  
 end
 
 local fovPixels = convertFovToPixels(aimFov)
@@ -8499,6 +8482,45 @@ AntiiiSection:Toggle({
     end
 })
 
+local NC = {enabled = false, conn = nil}
+
+AntiiiSection:Toggle({
+    Name = "No Clip",
+    Flag = "NoClip_Toggle",
+    Default = false,
+    Callback = function(state)
+        NC.enabled = state
+        local lplr = Players.LocalPlayer
+        if state then
+            if NC.conn then NC.conn:Disconnect() end
+            NC.conn = RunService.RenderStepped:Connect(function()
+                if NC.enabled and lplr.Character then
+                    local humanoidRootPart = lplr.Character:FindFirstChild("HumanoidRootPart")
+                    if humanoidRootPart then
+                        humanoidRootPart.CanCollide = false
+                    end
+                    for _, part in pairs(lplr.Character:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            if NC.conn then
+                NC.conn:Disconnect()
+                NC.conn = nil
+            end
+            if lplr.Character then
+                for _, part in pairs(lplr.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+        end
+    end
+})
 
 local CFV = {enabled = _G.Site43.features.changeFovEnabled, conn = nil}
 
@@ -9444,6 +9466,31 @@ ExploitSection:Button():Add("Give Armor", function()
     end
 end)
 
+
+
+ExploitSection:Button():Add("Give Helmet", function()
+    local player = game.Players.LocalPlayer
+    if player.Character then
+        local values = {
+            player.Character.Saude.Protecao.HelmetBlastProtect,
+            player.Character.Saude.Protecao.HelmetProtect,
+            player.Character.Saude.Protecao.HelmetVida,
+        }
+        for _, v in ipairs(values) do 
+            v.Value = 99e99 
+        end
+    end
+end)
+
+
+
+
+
+
+
+
+
+
 ExploitSection:Button():Add("TP Unanchored (TPUA)", function()
     local player = game.Players.LocalPlayer
     if not player.Character or not player.Character:FindFirstChild("Head") then
@@ -9482,19 +9529,6 @@ ExploitSection:Button():Add("TP Unanchored (TPUA)", function()
     Library:Notification("TPUA", count .. " parts attir\195\169es vers toi", 5)
 end)
 
-ExploitSection:Button():Add("Give Helmet", function()
-    local player = game.Players.LocalPlayer
-    if player.Character then
-        local values = {
-            player.Character.Saude.Protecao.HelmetBlastProtect,
-            player.Character.Saude.Protecao.HelmetProtect,
-            player.Character.Saude.Protecao.HelmetVida,
-        }
-        for _, v in ipairs(values) do 
-            v.Value = 99e99 
-        end
-    end
-end)
 
 
 
@@ -9526,6 +9560,21 @@ ExploitSection:Button():Add("Delete KillZones", function()
         3
     )
 end)
+
+
+ExploitSection:Button():Add("Devenir Ic", function()
+
+local part = workspace.TeamPartIC
+local character = game.Players.LocalPlayer.Character
+
+local fakePart = character:FindFirstChild("HumanoidRootPart")
+
+firetouchinterest(fakePart, part, 0) 
+
+end)
+
+
+
 
 local AV = {enabled = false, conns = {}, remote = nil}
 
@@ -9954,7 +10003,8 @@ local function applyWeaponSettings()
 			Library:Notification("Erreur", "Settings introuvable dans ACS_Modulo.Variaveis pour: " .. armeSelectionnee, 5)
 		end
 	else
-		Library:Notification("Arme introuvable ou équipée.", 5)
+		        Library:Notification("Arme introuvable", "Faut pas équiper l'arme sélectionnée", 5)
+
 	end
 	
 	applyInfAmmo()
@@ -9999,18 +10049,18 @@ GunSection:Slider({
     end
 })
 
-GunSection:Slider({
-    Name = "Balles par tir",
-    Flag = "Bullets_Slider",
-    Min = 1,
-    Max = 15,
-    Default = 1,
-    Decimals = 1,
-    Suffix = " balles",
-    Callback = function(v)
-        settings.bullets = v
-    end
-})
+--GunSection:Slider({
+   -- Name = "Balles par tir",
+   -- Flag = "Bullets_Slider",
+   -- Min = 1,
+   -- Max = 15,
+   -- Default = 1,
+   -- Decimals = 1,
+    --Suffix = " balles",
+   -- Callback = function(v)
+   --     settings.bullets = v
+   -- end
+--})
 
 BulletSpeedSlider = GunSection:Slider({
     Name = "Bullet Speed",
@@ -10043,7 +10093,7 @@ GunSection:Toggle({Name = "Rapid Fire", Flag = "RapidFire", Default = false, Cal
 Button = GunSection:Button()
 Button:Add("Apply Modif", applyWeaponSettings)
 Button:Add("Reset Modif", function()
-    _G.Site43.gunMods.settings = {degats = 20, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1}
+    _G.Site43.gunMods.settings = {degats = 100, bulletSpeed = 5000, maxDistance = 1000, gunSize = 1, bullets = 1}
     _G.Site43.gunMods.toggles = {noSpread = false, noRecoil = false, infiniteRange = false, maxBulletSpeed = false, noBulletDrop = false, maxPenetration = false, infAmmo = false, rapidFire = false, fireRateInf = false}
     settings = _G.Site43.gunMods.settings
     toggles = _G.Site43.gunMods.toggles
@@ -10078,7 +10128,6 @@ GunnSection:Searchbox({
     Callback = function(Value)
         armeSelectionnee = Value
         updateBulletSpeedSlider()
-        -- Auto-apply weapon settings when selection is restored from config
         if armeSelectionnee and armeSelectionnee ~= "" then
             task.defer(applyWeaponSettings)
         end
@@ -10234,10 +10283,8 @@ GunCustomizerToggle:Colorpicker({
 })
 
 
--- ===== CLIENT SIDE SECTION =====
 ClientSideSection = SkinSubPage:Section({Name = "Client Side", Side = 1})
 
--- Initialize Player Stats table if not exists
 _G.Site43.playerStats = _G.Site43.playerStats or {
     xpValue = "0",
     argentValue = "0"
@@ -10246,7 +10293,6 @@ _G.Site43.playerStats = _G.Site43.playerStats or {
 local playerStats = _G.Site43.playerStats
 local lplr = game.Players.LocalPlayer
 
--- Apply stats function
 local function applyPlayerStats()
     pcall(function()
         local playerChar = lplr.Character
@@ -10256,7 +10302,6 @@ local function applyPlayerStats()
             return
         end
         
-        -- Apply XP if value provided
         if playerStats.xpValue and playerStats.xpValue ~= "0" and playerStats.xpValue ~= "" then
             local xpValue = tonumber(playerStats.xpValue)
             if xpValue then
@@ -10266,7 +10311,6 @@ local function applyPlayerStats()
             end
         end
         
-        -- Apply Argent if value provided
         if playerStats.argentValue and playerStats.argentValue ~= "0" and playerStats.argentValue ~= "" then
             local argentValue = tonumber(playerStats.argentValue)
             if argentValue then
@@ -10282,7 +10326,6 @@ local function applyPlayerStats()
     end)
 end
 
--- XP Input
 local xpInput = ClientSideSection:Textbox({
     Name = "XP Amount",
     Default = "0",
@@ -10293,7 +10336,6 @@ local xpInput = ClientSideSection:Textbox({
     end
 })
 
--- Argent Input
 local argentInput = ClientSideSection:Textbox({
     Name = "Argent Amount",
     Default = "0",
@@ -10317,7 +10359,6 @@ local argentInput = ClientSideSection:Textbox({
 
         SkinnSection = SkinSubPage:Section({Name = "Local", Side = 2}) 
 
--- Regrouper Lighting config
 _G.Site43.lighting = _G.Site43.lighting or {
     enabled = false,
     ambient = Library.Theme.Accent, alpha = 0, fogStart = 0, fogEnd = 500,
@@ -10475,7 +10516,6 @@ LocalPlayer.CharacterAdded:Connect(function()
     end
 end)
 
--- ===== AURA SYSTEM (R15 COMPATIBLE) =====
 
 local PA = {
     color = Color3.fromRGB(169, 242, 112),
@@ -10486,7 +10526,6 @@ local PA = {
     connection = nil
 }
 
--- R15 Body Parts
 local body_parts = {
     "Head",
     "UpperTorso",
@@ -10541,7 +10580,6 @@ local function do_particle_aura()
     local hrp = local_parts["HumanoidRootPart"]
 
     if hrp then
-        -- Load both angel and star auras
         for aura_name, aura_object in pairs(particle_auras) do
             if aura_object then
                 local cloned = aura_object:Clone()
@@ -10570,7 +10608,6 @@ local function do_particle_aura()
     end
 end
 
--- UI Components for Particle Aura
 local auraToggle = SkinnSection:Toggle({
     Name = "Particle Aura",
     Flag = "particle_aura",
@@ -10656,13 +10693,11 @@ auraToggle:Colorpicker({
 })
 
 
--- Update local parts on character load
 LocalPlayer.CharacterAdded:Connect(function()
     wait(0.1)
     update_local_parts()
 end)
 
--- Initial setup
 update_local_parts()
 
 
@@ -10977,19 +11012,15 @@ Skin2Section:Slider({
 
 
 
--- ============================================================
--- AUTO FARM CONCIERGE - Complet avec Stats
--- ============================================================
+
 local AF = {Active = false, Connection = nil, SpinConnection = nil, SpawnPos = Vector3.new(-636, 5, 463)}
 
 local function HasBalai()
-    -- Cherche dans le Backpack
     for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
         if tool:IsA("Tool") and string.find(tool.Name, "Balai") then
             return tool
         end
     end
-    -- Cherche dans le Character
     local char = LocalPlayer.Character
     if char then
         for _, tool in ipairs(char:GetChildren()) do
@@ -11025,7 +11056,6 @@ local function StopAutoFarmConcierge()
         AF.SpinConnection = nil
     end
     
-    -- Destroy GUI
     local farmGui = CoreGui:FindFirstChild("AutoFarmConciergeGui")
     if farmGui then
         farmGui:Destroy()
@@ -11042,7 +11072,6 @@ local function StartAutoFarmConcierge()
     
     AF.Active = true
     
-    -- GUI groupé dans une table
     local gui = {}
     gui.farmGui = Instance.new("ScreenGui")
     gui.farmGui.Name = "AutoFarmConciergeGui"
@@ -11058,7 +11087,6 @@ local function StartAutoFarmConcierge()
     gui.bgFrame.BorderSizePixel = 0
     gui.bgFrame.Parent = gui.farmGui
     
-    -- Créer labels en table
     local function CreateLabel(text, posY, color)
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(0.5, 0, 0.07, 0)
@@ -11074,7 +11102,6 @@ local function StartAutoFarmConcierge()
         return lbl
     end
     
-    -- Labels dans une table
     local labels = {
         title = CreateLabel("Auto Farm Neptune", 0.05, Color3.fromRGB(255, 255, 255)),
         startMoney = CreateLabel("Depart: 0 $", 0.15, Color3.fromRGB(200, 200, 200)),
@@ -11084,7 +11111,6 @@ local function StartAutoFarmConcierge()
         tache = CreateLabel("Tache: 0 / 0", 0.55, Color3.fromRGB(200, 150, 255))
     }
     
-    -- Bouton
     gui.toggleBtn = Instance.new("TextButton")
     gui.toggleBtn.Size = UDim2.new(0.8, 0, 0.15, 0)
     gui.toggleBtn.Position = UDim2.new(0.1, 0, 0.80, 0)
@@ -11112,7 +11138,6 @@ local function StartAutoFarmConcierge()
         Library.Flags["AutoFarmConcierge"] = false
     end)
     
-    -- Stats groupées
     local stats = {
         startMoney = LocalPlayer:GetAttribute("Argent") or 0,
         startTick = tick()
@@ -11120,7 +11145,6 @@ local function StartAutoFarmConcierge()
     labels.startMoney.Text = "Depart: " .. stats.startMoney .. " $"
     labels.currentMoney.Text = "Actuel: " .. stats.startMoney .. " $"
     
-    -- Spin
     AF.SpinConnection = RunService.RenderStepped:Connect(function()
         if not AF.Active then return end
         local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -11129,7 +11153,6 @@ local function StartAutoFarmConcierge()
         end
     end)
     
-    -- Argent update
     LocalPlayer:GetAttributeChangedSignal("Argent"):Connect(function()
         if not AF.Active then return end
         local current = LocalPlayer:GetAttribute("Argent") or 0
@@ -11137,12 +11160,10 @@ local function StartAutoFarmConcierge()
         labels.gain.Text = "Gagne: +" .. (current - stats.startMoney) .. " $"
     end)
     
-    -- Remote
     local remote = ReplicatedStorage:WaitForChild("Charpente_Partage"):WaitForChild("RemoteEvent"):WaitForChild("Tool"):WaitForChild("BalaisRemote")
     
     Library:Notification("Auto Farm", "Auto Farm Active", 5)
     
-    -- Fonction pour toutes les taches
     local function DoAllTaches()
         local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then return end
@@ -11165,7 +11186,6 @@ local function StartAutoFarmConcierge()
         end
     end
     
-    -- Boucle principale
     AF.Connection = task.spawn(function()
         while AF.Active do
             DoAllTaches()
@@ -11180,7 +11200,6 @@ local function StartAutoFarmConcierge()
         end
     end)
     
-    -- Timer
     task.spawn(function()
         while AF.Active do
             local elapsed = tick() - stats.startTick
@@ -11245,19 +11264,9 @@ TpSection:Button():Add("Zone Class D", function()
 	library:SendNotification("Téléporté Zone Class D", 5, Color3.new(0, 1, 0))
 end)
 
-TpSection:Button():Add("Téléportation Vent Gate B", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1133, 16, 878)
-	library:SendNotification("Téléporté Vent Gate B", 5, Color3.new(0, 1, 0))
-end)
-
-TpSection:Button():Add("Téléportation IC", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1728, -45, 2720)
-	library:SendNotification("Téléporté Zone IC", 5, Color3.new(0, 1, 0))
-end)
-
-TpSection:Button():Add("Téléportation Salle Générateur", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1047, 5, 739)
-	library:SendNotification("Téléporté Zone Générateur", 5, Color3.new(0, 1, 0))
+TpSection:Button():Add("Spawn Class D", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-46.55, -3.19, 194.97)
+	library:SendNotification("Téléporté Spawn Class D", 5, Color3.new(0, 1, 0))
 end)
 
 TpSection:Button():Add("Spawn UT", function()
@@ -11265,9 +11274,29 @@ TpSection:Button():Add("Spawn UT", function()
 	library:SendNotification("Téléporté Spawn UT", 5, Color3.new(0, 1, 0))
 end)
 
-TpSection:Button():Add("Spawn Class D", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-46.55, -3.19, 194.97)
-	library:SendNotification("Téléporté Spawn Class D", 5, Color3.new(0, 1, 0))
+TpSection:Button():Add("Vent Gate B", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1133, 16, 878)
+	library:SendNotification("Téléporté Vent Gate B", 5, Color3.new(0, 1, 0))
+end)
+
+TpSection:Button():Add("Vent Gate A", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-323.50, -11.97, 685.83)
+	library:SendNotification("Téléporté Gate A", 5, Color3.new(0, 1, 0))
+end)
+
+TpSection:Button():Add("Base IC", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1728, -45, 2720)
+	library:SendNotification("Téléporté Zone IC", 5, Color3.new(0, 1, 0))
+end)
+
+TpSection:Button():Add("Ic Ez", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-681, 5, 384)
+	library:SendNotification("Téléporté Ic Ez", 5, Color3.new(0, 1, 0))
+end)
+
+TpSection:Button():Add("Salle Générateur", function()
+	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1047, 5, 739)
+	library:SendNotification("Téléporté Zone Générateur", 5, Color3.new(0, 1, 0))
 end)
 
 TpSection:Button():Add("Easter Eggs", function()
@@ -11290,23 +11319,10 @@ TpSection:Button():Add("Badge Sniper", function()
 	library:SendNotification("Téléporté Vrai Sniper", 5, Color3.new(0, 1, 0))
 end)
 
-TpSection:Button():Add("Gate A", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-323.50, -11.97, 685.83)
-	library:SendNotification("Téléporté Gate A", 5, Color3.new(0, 1, 0))
-end)
-
 TpSection:Button():Add("Badge MP5 ", function()
 	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(378.00, 1.00, 2485.00)
 	library:SendNotification("Téléporté Badge", 5, Color3.new(0, 1, 0))
 end)
-
-TpSection:Button():Add("Ic Ez", function()
-	Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-681, 5, 384)
-	library:SendNotification("Téléporté Ic Ez", 5, Color3.new(0, 1, 0))
-end)
-
-
-
 
 
 
