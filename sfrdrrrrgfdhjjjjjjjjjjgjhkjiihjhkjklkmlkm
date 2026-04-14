@@ -187,7 +187,6 @@ task.spawn(function()
     updateLoader("Bypassing Anti-Cheat", 10)
     wait(4)
     
-    Site43Lib:BrickAntiCheat()
     
     wait(0.5)
     updateLoader("Loading Assets", 35)
