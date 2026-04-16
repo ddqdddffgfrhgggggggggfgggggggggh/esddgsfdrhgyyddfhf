@@ -187,6 +187,495 @@ task.spawn(function()
     updateLoader("Bypassing Anti-Cheat", 10)
     wait(4)
     
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+
+local function safeDestroy(instance)
+    if typeof(instance) == "Instance" and instance.Parent then
+        pcall(function()
+            instance:Destroy()
+        end)
+    end
+end
+
+local function disableInstance(instance)
+    if typeof(instance) == "Instance" then
+        pcall(function()
+            if instance:IsA("LocalScript") or instance:IsA("Script") then
+                instance.Disabled = true
+            end
+        end)
+        safeDestroy(instance)
+    end
+end
+
+local function removeNamedInstances(parent, names)
+    for _, name in ipairs(names) do
+        local target = parent:FindFirstChild(name)
+        if target then
+            safeDestroy(target)
+        end
+    end
+end
+
+local function destroyPlutonObjects(root)
+    for _, obj in ipairs(root:GetDescendants()) do
+        if obj.Name:lower():find("pluton") then
+            if obj.Parent == ReplicatedStorage and (obj.Name == "Pluton" or obj.Name == "PlutonMessager") then
+                -- Préserver les remotes racine Pluton et PlutonMessager
+            else
+                safeDestroy(obj)
+            end
+        end
+    end
+end
+
+local function getNil(name, class)
+    if type(getnilinstances) ~= "function" then
+        return nil
+    end
+
+    for _, v in next, getnilinstances() do
+        if v.ClassName == class and v.Name == name then
+            return v
+        end
+    end
+
+    return nil
+end
+
+-- 1) Supprimer les remotes demandés dans ReplicatedStorage
+local replicatedRemotes = {
+    "UpdateWalkspeed",
+    "PowersRemoteEvent",
+    "RepairWoodRemote",
+    "SCP_049_2Attack",
+    "Sentinel",
+    "StartEventPortal",
+    "TeleportationEvent",
+    "OpenCamionInventory",
+    "HidingSpotEvent",
+    "HDAdminSetup",
+    "FootStepsIDList",
+    "ElevatorDisplayClient",
+    "DefaultServerSoundEvent",
+    "Debug",
+    "CuffSystemConfig",
+    "Checker",
+    "ArrestLength",
+    "TopbarPlusReference",
+    "What do you know?",
+    "EventParticipation",
+}
+
+removeNamedInstances(ReplicatedStorage, replicatedRemotes)
+
+-- 2) Supprimer les scripts dans StarterPlayerScripts
+pcall(function()
+    local starterScripts = StarterPlayer:FindFirstChild("StarterPlayerScripts")
+    if starterScripts then
+        removeNamedInstances(starterScripts, {
+            "CamP4",
+            "DECT",
+            "explosionservice",
+            "iwcoz_MainClient",
+        })
+    end
+end)
+
+-- 3) Supprimer les scripts dans PlayerScripts du joueur local
+pcall(function()
+    if LocalPlayer then
+        local playerScripts = LocalPlayer:FindFirstChild("PlayerScripts")
+        if playerScripts then
+            removeNamedInstances(playerScripts, {
+                "CamP4",
+                "DECT",
+                "HDAdminStarterPlayer",
+                "explosionservice",
+                "iwcoz_MainClient",
+            })
+        end
+    end
+end)
+
+-- 4) Supprimer toutes les instances contenant "pluton" dans le nom
+pcall(function()
+    destroyPlutonObjects(Workspace)
+    destroyPlutonObjects(ReplicatedStorage)
+    if LocalPlayer then
+        local playerScripts = LocalPlayer:FindFirstChild("PlayerScripts")
+        if playerScripts then
+            destroyPlutonObjects(playerScripts)
+        end
+    end
+    local starterScripts = StarterPlayer:FindFirstChild("StarterPlayerScripts")
+    if starterScripts then
+        destroyPlutonObjects(starterScripts)
+    end
+
+    -- 4.1) Supprimer le chemin spécifique demandé dans ReplicatedStorage
+    pcall(function()
+        local partition = ReplicatedStorage:FindFirstChild("Charpente_Partage")
+        if partition then
+            local module = partition:FindFirstChild("Module")
+            if module then
+                local generator = module:FindFirstChild("TasseGenerator")
+                if generator then
+                    safeDestroy(generator)
+                end
+            end
+        end
+    end)
+end)
+
+
+
+local nilObjects = {
+    {name = "Sentinel", class = "RemoteEvent"},
+    {name = "Pluton_Client", class = "LocalScript"},
+}
+
+for _, entry in ipairs(nilObjects) do
+    local inst = getNil(entry.name, entry.class)
+    if inst then
+        disableInstance(inst)
+    end
+end
+
+spawn(function()
+    while wait(10) do
+        pcall(function()
+            local plutonScript = getNil("Pluton", "LocalScript")
+            if plutonScript then
+                disableInstance(plutonScript)
+            end
+        end)
+    end
+end)
+
+-- 6) Hook namecall pour bloquer les remotes et whitelist InvokeServer
+local old_namecall
+old_namecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    local name = tostring(self.Name)
+
+    if not checkcaller() and (method == "FireServer" or method == "InvokeServer") then
+        if name == "Pluton" or name == "PlutonMessager" then
+            return nil
+        end
+
+        if method == "InvokeServer" then
+            local whitelist = {
+                DriveSeat = true,
+                ResetPlayer = true,
+                Drift = true,
+                Destroy_ACI = true,
+            }
+
+            if not whitelist[args[1]] then
+                return nil
+            end
+        end
+    end
+
+    if method == "Kick" and self == game.Players.LocalPlayer then
+        return nil
+    end
+
+    return old_namecall(self, ...)
+end))
+
+
+-- 7) Bloquer explicitement les remotes Pluton et PlutonMessager si toujours présents
+print("[Neptune.wtf] Starting...")
+pcall(function()
+    local blocked = { "Pluton", "PlutonMessager" }
+    for _, name in ipairs(blocked) do
+        local remote = ReplicatedStorage:FindFirstChild(name)
+        if remote then
+            for _, signalName in ipairs({"OnClientEvent", "OnClientInvoke", "AncestryChanged", "Changed"}) do
+                pcall(function()
+                    local signal = remote[signalName]
+                    if signal then
+                        for _, conn in ipairs(getconnections(signal) or {}) do
+                            if conn.Disable then
+                                conn:Disable()
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end)
+print("[Neptune.wtf] Remotes blocked!")
+
+-- 7.1) Boucle pour hooker PlutonMessager quand il apparaît
+print("[Neptune.wtf] PlutonMessager hooked")
+spawn(function()
+    while wait(0.5) do
+        pcall(function()
+            local plutonMsg = ReplicatedStorage:FindFirstChild("PlutonMessager")
+            if plutonMsg and not plutonMsg:GetAttribute("Hooked") then
+                -- Hook FireServer
+                plutonMsg.FireServer = newcclosure(function(self, ...)
+                    warn("[Neptune.wtf] PlutonMessager FireServer blocked")
+                    return nil
+                end)
+
+                -- Hook InvokeServer si c'est un RemoteFunction
+                if plutonMsg:IsA("RemoteFunction") then
+                    plutonMsg.InvokeServer = newcclosure(function(self, ...)
+                        warn("[Neptune.wtf] PlutonMessager InvokeServer blocked")
+                        return nil
+                    end)
+                end
+
+                plutonMsg:SetAttribute("Hooked", true)
+                print("[Neptune.wtf] PlutonMessager methods hooked directly")
+            end
+        end)
+    end
+end)
+
+-- 7.2) Boucle pour remplacer PlutonMessager par dummy quand il apparaît
+print("[Neptune.wtf] PlutonMessager Ignore call...")
+spawn(function()
+    while wait(0.5) do
+        pcall(function()
+            local originalPlutonMsg = ReplicatedStorage:FindFirstChild("PlutonMessager")
+            if originalPlutonMsg and not originalPlutonMsg:GetAttribute("Replaced") then
+                -- Créer un dummy RemoteEvent
+                local dummyRemote = Instance.new("RemoteEvent")
+                dummyRemote.Name = "PlutonMessager"
+                dummyRemote.Parent = ReplicatedStorage
+
+                -- Remplacer l'original par le dummy
+                originalPlutonMsg:Destroy()
+                ReplicatedStorage.PlutonMessager = dummyRemote
+
+                -- Hook les méthodes du dummy pour ignorer
+                dummyRemote.FireServer = newcclosure(function(self, ...)
+                    warn("[Neptune.wtf] PlutonMessager FireServer ignored! Lol ez bypass")
+                    return
+                end)
+
+                if dummyRemote:IsA("RemoteFunction") then
+                    dummyRemote.InvokeServer = newcclosure(function(self, ...)
+                        warn("[Neptune.wtf] PlutonMessager InvokeServer ignored! Lol ez bypass")
+                        return nil
+                    end)
+                end
+
+                dummyRemote:SetAttribute("Replaced", true)
+                print("[Neptune.wtf] PlutonMessager - all calls ignored!")
+            end
+        end)
+    end
+end)
+
+
+Site43Lib = {}
+
+function Site43Lib:BrickAntiCheat()
+    if game:GetService("ReplicatedStorage"):FindFirstChild("PlutonMessager") then
+        -- Hook robuste du namecall - bloquer les deux remotes
+        local OldNamecall
+        OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(Self, ...)
+            local Method = getnamecallmethod()
+            
+            -- Block FireServer ET InvokeServer sur les deux remotes
+            if (Self.Name == "PlutonMessager" or Self.Name == "Pluton") then
+                if Method == "FireServer" or Method == "InvokeServer" then
+                    warn("[Neptune.wtf] Blocked "..Self.Name.."::"..Method)
+                    return nil
+                end
+            end
+            
+            return OldNamecall(Self, ...)
+        end))
+
+        RecoveredAntiCheat = nil 
+
+        for _, v in pairs(getnilinstances()) do 
+            if v.ClassName == 'LocalScript' and v.Name == 'Pluton_Client' then
+                RecoveredAntiCheat = v
+                break
+            end
+        end
+        
+        for _, i in pairs(getgc(true)) do 
+            if typeof(i) == 'function' then 
+                functioninfo = debug.getinfo(i)
+
+                if not functioninfo then continue end
+
+                if functioninfo.name == 'PhysicalPunish' or functioninfo.name == 'ClearRS' or functioninfo.name == 'onSuspectGui' or functioninfo.name == 'SearchGUI' then 
+                    print("Patching "..functioninfo.name)
+                    hookfunction(i, function() 
+                        return
+                    end)
+                else
+                    if functioninfo.name == 'CheckGui' then
+                        print("Patching "..functioninfo.name) 
+                        hookfunction(i, function() 
+                            return true
+                        end)
+                    end
+                end
+            end
+        end
+
+        -- Protection des connections d'anticheat (sans détruire les remotes)
+        pcall(function()
+            local PlutonMsg = game:GetService("ReplicatedStorage"):FindFirstChild("PlutonMessager")
+            if PlutonMsg then
+                -- Disable les connections AncestryChanged
+                local PatchListOne = getconnections(PlutonMsg.AncestryChanged)
+                for _, connection in pairs(PatchListOne) do 
+                    print("[Neptune.wtf] Disabled AncestryChanged connection")
+                    connection:Disable()
+                end
+            end
+        end)
+        
+        -- Protection du Kick remote s'il existe
+        pcall(function()
+            local KickRemote = game:GetService("ReplicatedStorage"):WaitForChild("ACS_Engine", 5) and game:GetService("ReplicatedStorage").ACS_Engine:FindFirstChild("Kick") or game:GetService("ReplicatedStorage"):FindFirstChild("Kick")
+            if KickRemote then
+                local PatchListTwo = getconnections(KickRemote:GetPropertyChangedSignal("Parent"))
+                for _, connection in pairs(PatchListTwo) do 
+                    print("[Neptune.wtf] Disabled Kick PropertyChanged connection")
+                    connection:Disable()
+                end
+            end
+        end)
+
+        spawn(function()
+            local properties = {
+                "CanCollide",
+                "RotVelocity", 
+                "Velocity",
+                "AssemblyLinearVelocity",
+                "AssemblyAngularVelocity"
+            }
+            
+            local bodyParts = {"HumanoidRootPart", "Torso", "Head"}
+            
+            local function PatchPart(part, partName)
+                for _, property in ipairs(properties) do
+                    local connections = getconnections(part:GetPropertyChangedSignal(property))
+                    for _, connection in ipairs(connections) do
+                        connection:Disable()
+                    end
+                end
+            end
+            
+            while wait(1) do
+                pcall(function()
+                    local char = game.Players.LocalPlayer.Character
+                    if char then
+                        for _, partName in ipairs(bodyParts) do
+                            local part = char:FindFirstChild(partName)
+                            if part then
+                                PatchPart(part, partName)
+                            end
+                            task.wait(1)
+                        end
+                    end
+                end)
+            end
+        end)
+
+        -- [IMPORTANT] Ne pas détruire le PlutonMessager - c'est ce qui cause le kick/ban!
+        -- Les remotes sont maintenant hookés et tous les appels sont bloqués
+        print("[Neptune.wtf Bypass] PlutonMessager et Pluton Hooked - By 1998")
+
+
+        local getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller, lower, gsub, match = getgenv, getnamecallmethod, hookmetamethod, hookfunction, newcclosure, checkcaller, string.lower, string.gsub, string.match
+
+
+        if getgenv().ED_AntiKick then
+            return
+        end
+
+
+        local cloneref = cloneref or function(...) 
+            return ...
+        end
+
+        local clonefunction = clonefunction or function(...)
+            return ...
+        end
+
+        local Players, LocalPlayer, StarterGui = cloneref(game:GetService("Players")), cloneref(game:GetService("Players").LocalPlayer), cloneref(game:GetService("StarterGui"))
+
+        local SetCore = clonefunction(StarterGui.SetCore)
+        --local GetDebugId = clonefunction(game.GetDebugId)
+        local FindFirstChild = clonefunction(game.FindFirstChild)
+
+        local CompareInstances = (CompareInstances and function(Instance1, Instance2)
+                if typeof(Instance1) == "Instance" and typeof(Instance2) == "Instance" then
+                    return CompareInstances(Instance1, Instance2)
+                end
+            end)
+        or
+        function(Instance1, Instance2)
+            return (typeof(Instance1) == "Instance" and typeof(Instance2) == "Instance")-- and GetDebugId(Instance1) == GetDebugId(Instance2)
+        end
+
+        local CanCastToSTDString = function(...)
+            return pcall(FindFirstChild, game, ...)
+        end
+
+        --// Global Variables
+
+        getgenv().ED_AntiKick = {
+            Enabled = true, -- Set to false if you want to disable the Anti-Kick.
+            SendNotifications = false, -- Set to true if you want to get notified for every event.
+            CheckCaller = true -- Set to true if you want to disable kicking by other user executed scripts.
+        }
+
+        --// Main
+
+        local OldNamecall; OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(...)
+            local self, message = ...
+            local method = getnamecallmethod()
+            
+            if ((getgenv().ED_AntiKick.CheckCaller and not checkcaller()) or true) and CompareInstances(self, LocalPlayer) and gsub(method, "^%l", string.upper) == "Kick" and ED_AntiKick.Enabled then
+                if CanCastToSTDString(message) then
+
+                    return
+                end
+            end
+
+            return OldNamecall(...)
+        end))
+
+        local OldFunction; OldFunction = hookfunction(LocalPlayer.Kick, function(...)
+            local self, Message = ...
+
+            if ((ED_AntiKick.CheckCaller and not checkcaller()) or true) and CompareInstances(self, LocalPlayer) and ED_AntiKick.Enabled then
+                if CanCastToSTDString(Message) then
+                    return
+                end
+            end
+        end)
+
+    end
+end
+
+
+Site43Lib:BrickAntiCheat()
+
+
     
     wait(0.5)
     updateLoader("Loading Assets", 35)
@@ -7005,7 +7494,8 @@ local Config = {
     ShowTargetText = false,
     Snapline = false,
     DebugWallbang = false,
-    IgnoreStaff = false
+    IgnoreStaff = false,
+    AimPart = "Head"
 }
 
 _G.knownStaff = _G.knownStaff or {}
@@ -7152,14 +7642,14 @@ task.spawn(function()
                     end
                     
                     local humanoid = player.Character:FindFirstChild("Humanoid")
-                    local head = player.Character:FindFirstChild("Head")
+                    local targetPart = player.Character:FindFirstChild(Config.AimPart)
                     
-                    if humanoid and humanoid.Health > 0 and head then
-                        local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(head.Position)
+                    if humanoid and humanoid.Health > 0 and targetPart then
+                        local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(targetPart.Position)
                         if onScreen then
                             local mag = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
                             if mag < Config.FOV and mag < nearestDistance then
-                                if IsVisible(head) then
+                                if IsVisible(targetPart) then
                                     nearestDistance = mag
                                     nearestEnemy = player
                                 end
@@ -7169,9 +7659,9 @@ task.spawn(function()
                 end
             end
             
-            _G.NearestEnemyHead = nearestEnemy and nearestEnemy.Character and nearestEnemy.Character:FindFirstChild("Head")
+            _G.NearestEnemyHead = nearestEnemy and nearestEnemy.Character and nearestEnemy.Character:FindFirstChild(Config.AimPart)
             _G.TargetedPlayer = nearestEnemy and nearestEnemy.Name or nil
-            _G.TargetIsVisible = nearestEnemy and IsActuallyVisible(nearestEnemy.Character.Head) or false
+            _G.TargetIsVisible = nearestEnemy and IsActuallyVisible(nearestEnemy.Character:FindFirstChild(Config.AimPart)) or false
         else
             _G.NearestEnemyHead = nil
             _G.TargetedPlayer = nil
@@ -7234,6 +7724,18 @@ SilentAimSection:Toggle({
     end
 })
 
+SilentAimSection:Dropdown({
+    Name = "Body part",
+    Flag = "SilentAimBone",
+    Default = "Head",
+    Multi = false,
+    Items = {"Head", "HumanoidRootPart", "Left Arm", "Right Arm", "Torso", "Left Leg", "Right Leg"},
+    Callback = function(Value)
+        Config.AimPart = Value
+    end
+})
+
+
 SilentAimSection:Slider({
     Name = "Fov", 
     Flag = "FovSlider", 
@@ -7269,6 +7771,8 @@ fovCircleToggle:Colorpicker({
         FOVCircle.Color = v
     end
 })
+
+
 
 SilentAimSection:Toggle({
     Name = "Snapline",
