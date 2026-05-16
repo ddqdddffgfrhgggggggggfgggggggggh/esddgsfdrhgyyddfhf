@@ -1,14 +1,72 @@
-LPH_NO_VIRTUALIZE(function()
 
-   if genv.BypassAnticheat then
+-- antiliases
+if not LPH_OBFUSCATED then
+	LPH_JIT = function(Function) return Function end
+	LPH_JIT_MAX = function(Function) return Function end
+	LPH_NO_VIRTUALIZE = function(Function) return Function end
+      LPH_NO_UPVALUES = function(Function) return function(...) return Function(...) end end
+	LPH_ENCSTR = function(String) return String end
+	LPH_ENCNUM = function(Number) return Number end
+	LPH_CRASH = function() return rconsoleprint("DEBUG: CLIENT CALLED CRASH") end
+	--
+	LRM_IsUserPremium = true
+	LRM_LinkedDiscordID = "Developer"
+	LRM_ScriptName = "ScriptName"
+	LRM_TotalExecutions = 0
+	LRM_SecondsLeft = 999999
+	LRM_UserNote = "UserNote"
+
+	if not getgenv then
+		getgenv = function() return _G end
+	end
+
+	if not cloneref then
+		cloneref = function(Reference) return Reference end
+	end
+
+	if not loadfile then
+		loadfile = function(...) return ... end
+	end
+
+	if not readfile then
+		readfile = function(...) return ... end
+	end
+
+	if not request then
+		request = function(...) return ... end
+	end
+
+	if not clonefunction then
+		clonefunction = function(f) return f end
+	end
+
+	if not newcclosure then
+		newcclosure = function(...) return ... end
+	end
+
+	if not hookfunction then
+		hookfunction = function() end
+	end
+
+	if not getrenv then
+		getrenv = function() return {} end
+	end
+end 
+
+
+
         local Players = game:GetService("Players")
         local lp = Players.LocalPlayer
         local RS = game:GetService("ReplicatedStorage")
 
-        hookfunction(lp.Kick, newcclosure(function(self, ...)
+        -- Kick Hook
+        if pcall(function() hookfunction(lp.Kick, newcclosure(function(self, ...)
             print("[Neptune.wtf] Kick Called:", ...)
-        end))
+        end)) end) then
+            print("[Neptune.wtf] Kick hooked")
+        end
 
+        -- Metatable Hook
         local mt = getrawmetatable(game)
         setreadonly(mt, false)
         local old_index = mt.__index
@@ -18,45 +76,27 @@ LPH_NO_VIRTUALIZE(function()
         end)
         setreadonly(mt, true)
 
-        task.spawn(function()
-            local ok, Sentinel = pcall(function()
-                return RS:WaitForChild("Sentinel", 5)
+        -- Hook RemoteEvents génériquement
+        local function HookRemoteEvent(name)
+            task.spawn(function()
+                local remote = RS:WaitForChild(name, 10)
+                if remote and remote:FindFirstChild("FireServer") or remote.FireServer then
+                    local originalFire = remote.FireServer
+                    hookfunction(remote.FireServer, newcclosure(function(self, ...)
+                        print("[Neptune.wtf] " .. name .. " Called:", ...)
+                    end))
+                    print("[Neptune.wtf] " .. name .. " hooked")
+                end
             end)
-            if ok and Sentinel then
-                hookfunction(Sentinel.FireServer, newcclosure(function(self, code, ...)
-                    print("[Neptune.wtf] Sentinel Called This nigga is so retarded Lol:", code)
-                end))
-                print("[Neptune.wtf] Sentinel hooked")
-            end
-        end)
+        end
 
+        HookRemoteEvent("Sentinel")
+        HookRemoteEvent("PlutonMessager")
+        HookRemoteEvent("Pluton")
+
+        -- Anti-Cheat Patch
         task.spawn(function()
-            local ok, Messager = pcall(function()
-                return RS:WaitForChild("PlutonMessager", 5)
-            end)
-            if ok and Messager then
-                hookfunction(Messager.FireServer, newcclosure(function(self, event, ...)
-                    print("[Neptune.wtf] PlutonMessager Called This nigga is so retarded Lol:", event)
-                end))
-                print("[Neptune.wtf] PlutonMessager hooked")
-            end
-        end)
-
-
-        task.spawn(function()
-            local ok, Messager = pcall(function()
-                return RS:WaitForChild("Pluton", 5)
-            end)
-            if ok and Messager then
-                hookfunction(Messager.FireServer, newcclosure(function(self, event, ...)
-                    print("[Neptune.wtf] Pluton Called This nigga is so retarded Lol:", event)
-                end))
-                print("[Neptune.wtf] Pluton hooked")
-            end
-        end)
-
-        spawn(function()
-            local properties = {
+            local PROPERTIES_TO_PATCH = {
                 "CanCollide",
                 "RotVelocity", 
                 "Velocity",
@@ -64,48 +104,51 @@ LPH_NO_VIRTUALIZE(function()
                 "AssemblyAngularVelocity"
             }
             
-            local bodyParts = {"HumanoidRootPart", "Torso", "Head"}
-            local lastCharacter = nil
+            local BODY_PARTS = {"HumanoidRootPart", "Torso", "Head"}
+            local patchedParts = setmetatable({}, {__mode = "v"})
             
-            local function PatchPart(part, partName)
-                for _, property in ipairs(properties) do
-                    local connections = getconnections(part:GetPropertyChangedSignal(property))
+            local function PatchPart(part)
+                if not part or patchedParts[part] then return end
+                
+                for _, property in ipairs(PROPERTIES_TO_PATCH) do
+                    local signal = part:GetPropertyChangedSignal(property)
+                    local connections = getconnections(signal)
                     for _, connection in ipairs(connections) do
-                        connection:Disable()
+                        if connection and connection.Connected then
+                            connection:Disable()
+                        end
                     end
                 end
+                
+                patchedParts[part] = true
             end
             
             local function PatchCharacter(char)
-                if not char then return end
-                for _, partName in ipairs(bodyParts) do
+                if not char or not char.Parent then return end
+                
+                for _, partName in ipairs(BODY_PARTS) do
                     local part = char:FindFirstChild(partName)
                     if part then
-                        PatchPart(part, partName)
+                        PatchPart(part)
                     end
                 end
             end
             
             local function OnCharacterAdded(char)
-                lastCharacter = char
-                task.wait(0.1)
-                PatchCharacter(char)
+                if char then
+                    task.wait(0.05)
+                    PatchCharacter(char)
+                end
             end
             
-            if game.Players.LocalPlayer.Character then
-                PatchCharacter(game.Players.LocalPlayer.Character)
+            if lp.Character then
+                PatchCharacter(lp.Character)
             end
             
-            game.Players.LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
+            lp.CharacterAdded:Connect(OnCharacterAdded)
         end)
 
-        print("[Neptune.wtf] Yeah bypassed or whatever")
-    else
-        print("[Neptune.wtf] Bypass anticheat Off - genv.BypassAnticheat = false")
-   end
-
-    end)()
-    
+        print("[Neptune.wtf] Bypass loaded successfully")
 
 
 
@@ -179,9 +222,9 @@ local aiming = cfg.aimbot.aiming
 local predictionStrength = cfg.aimbot.predictionStrength
 local smoothing = cfg.aimbot.smoothing
 
-local function convertFovToPixels(fovDegrees)
+local convertFovToPixels = LPH_JIT(function(fovDegrees)
     return (fovDegrees / 60) * 150  
-end
+end)
 
 local fovPixels = convertFovToPixels(aimFov)
 
@@ -199,7 +242,7 @@ local alliedTeams = {
     ["InsurrectionDuChaos"] = true,
 }
 
-RunService.Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(LPH_JIT(function()
     if cfg.antiAim.enabled then
         if cfg.antiAim.method == "Reset Velo" then
             local vel = hrp.Velocity
@@ -221,9 +264,9 @@ RunService.Heartbeat:Connect(function()
             hrp.Velocity = vel
         end
     end
-end)
+end))
 
-local function checkTeam(player)
+local checkTeam = LPH_JIT(function(player)
     if cfg.aimbot.teamCheck then
         if player.Team == plr.Team then
             return true
@@ -235,49 +278,42 @@ local function checkTeam(player)
         end
     end
     return false
-end
+end)
 
-local function checkWall(targetCharacter)
+local checkWall = LPH_JIT(function(targetCharacter)
     local targetHead = targetCharacter:FindFirstChild("Head")
     if not targetHead then return true end
-
     local origin = camera.CFrame.Position
     local direction = (targetHead.Position - origin).unit * (targetHead.Position - origin).magnitude
     local raycastParams = RaycastParams.new()
     raycastParams.FilterDescendantsInstances = {plr.Character, targetCharacter}
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
     local raycastResult = wrk:Raycast(origin, direction, raycastParams)
     return raycastResult and raycastResult.Instance ~= nil
-end
+end)
 
-local function getClosestPart(character)
+local getClosestPart = LPH_JIT(function(character)
     local closestPart = nil
     local shortestCursorDistance = fovPixels
-    local cameraPos = camera.CFrame.Position
-
     for _, partName in ipairs(aimParts) do
         local part = character:FindFirstChild(partName)
         if part then
             local partPos = camera:WorldToViewportPoint(part.Position)
             local screenPos = Vector2.new(partPos.X, partPos.Y)
             local cursorDistance = (screenPos - Vector2.new(mouse.X, mouse.Y)).Magnitude
-
             if cursorDistance < shortestCursorDistance and partPos.Z > 0 then
                 shortestCursorDistance = cursorDistance
                 closestPart = part
             end
         end
     end
-
     return closestPart
-end
+end)
 
-local function getTarget()
+local getTarget = LPH_JIT(function()
     local nearestPlayer = nil
     local closestPart = nil
     local shortestCursorDistance = fovPixels
-
     for _, player in ipairs(players:GetPlayers()) do
         if player ~= plr and player.Character and not checkTeam(player) then
             if player.Character.Humanoid.Health >= cfg.aimbot.minHealth or not cfg.aimbot.healthCheck then
@@ -285,7 +321,6 @@ local function getTarget()
                 if targetPart then
                     local screenPos = camera:WorldToViewportPoint(targetPart.Position)
                     local cursorDistance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
-
                     if cursorDistance < shortestCursorDistance then
                         if not checkWall(player.Character) or not cfg.aimbot.wallCheck then
                             shortestCursorDistance = cursorDistance
@@ -297,24 +332,23 @@ local function getTarget()
             end
         end
     end
-
     return nearestPlayer, closestPart
-end
+end)
 
-local function predict(player, part)
+local predict = LPH_JIT(function(player, part)
     if player and part then
         local velocity = player.Character.HumanoidRootPart.Velocity
         local predictedPosition = part.Position + (velocity * predictionStrength)
         return predictedPosition
     end
     return nil
-end
+end)
 
-local function smooth(from, to)
+local smooth = LPH_JIT(function(from, to)
     return from:Lerp(to, smoothing)
-end
+end)
 
-local function aimAt(player, part)
+local aimAt = LPH_JIT(function(player, part)
     local predictedPosition = predict(player, part)
     if predictedPosition then
         if player.Character.Humanoid.Health >= cfg.aimbot.minHealth or not cfg.aimbot.healthCheck then
@@ -322,9 +356,13 @@ local function aimAt(player, part)
             camera.CFrame = smooth(camera.CFrame, targetCFrame)
         end
     end
-end
+end)
 
-RunService.RenderStepped:Connect(function()
+-- Throttle system for target updates to prevent FPS drops
+local lastTargetUpdate = 0
+local targetUpdateInterval = 0.1
+
+RunService.RenderStepped:Connect(LPH_JIT(function()
     if cfg.aimbot.enabled then
         local offset = 50
         fovCircle.Position = Vector2.new(mouse.X, mouse.Y + offset)
@@ -352,10 +390,13 @@ RunService.RenderStepped:Connect(function()
                 end
             end
 
-            if not cfg.aimbot.stickyAim or not currentTarget then
+            -- Only update target at throttled intervals to prevent FPS drops
+            local currentTime = tick()
+            if not cfg.aimbot.stickyAim or not currentTarget or (currentTime - lastTargetUpdate) >= targetUpdateInterval then
                 local target, targetPart = getTarget()
                 currentTarget = target
                 currentTargetPart = targetPart
+                lastTargetUpdate = currentTime
             end
 
             if currentTarget and currentTargetPart then
@@ -365,7 +406,7 @@ RunService.RenderStepped:Connect(function()
             currentTarget = nil
         end
     end
-end)
+end))
 
 
 mouse.Button2Down:Connect(function()
@@ -399,12 +440,6 @@ end)
 
 
 
-
-
-
-
-
-
 local dim_offset = UDim2.fromOffset 
 local dim2 = UDim2.new 
 local Camera = workspace.CurrentCamera -- DETECTED WTFFF
@@ -412,7 +447,7 @@ local rgb = Color3.fromRGB
 local Players = cloneref(game:GetService("Players")) -- Thanks peke for the bullying 
 local LocalPlayer = Players.LocalPlayer
 
-Library, Esp, MiscOptions, Options = loadstring(game:HttpGet("https://raw.githubusercontent.com/jeanlux91828-cmyk/gui/refs/heads/main/sdsqdsq"))()
+Library, Esp, MiscOptions, Options = loadstring(game:HttpGet("https://raw.githubusercontent.com/e1998a/libUHQ/refs/heads/main/sqdsq"))()
 local Holder = Library:Window({Name = "Neptune.wtf"})
 
 
@@ -835,7 +870,7 @@ DebugWBText.Text = "WallBanged"
 local RaycastWhitelist = RaycastParams.new()
 RaycastWhitelist.FilterType = Enum.RaycastFilterType.Include
 
-RunService.RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(LPH_JIT(function()
     if Config.Enabled and Config.ShowFOVCircle then
         local mousePos = UserInputService:GetMouseLocation()
         FOVCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
@@ -878,9 +913,22 @@ RunService.RenderStepped:Connect(function()
     else
         SnaplineOut.Visible = false
     end
-end)
+end))
 
-local function IsVisible(targetPart)
+-- Optimized raycast parameters - created once instead of every call
+local RayParamsVis = RaycastParams.new()
+RayParamsVis.FilterType = Enum.RaycastFilterType.Exclude
+RayParamsVis.IgnoreWater = true
+
+local RayParamsActual = RaycastParams.new()
+RayParamsActual.FilterType = Enum.RaycastFilterType.Exclude
+RayParamsActual.IgnoreWater = true
+
+-- Cache for visibility checks with timestamps
+local visibilityCache = {}
+local VISIBILITY_CACHE_DURATION = 0.05 -- 50ms cache
+
+local IsVisible = LPH_JIT(function(targetPart)
     if Config.Wallbang then 
         return true 
     end
@@ -889,42 +937,63 @@ local function IsVisible(targetPart)
         return true 
     end
     
+    -- Check cache first
+    local cacheKey = targetPart
+    local cached = visibilityCache[cacheKey]
+    if cached and (tick() - cached.time) < VISIBILITY_CACHE_DURATION then
+        return cached.result
+    end
+    
     local camera = workspace.CurrentCamera
     local origin = camera.CFrame.Position
     local direction = (targetPart.Position - origin).Unit * 500
     
-    local rayParams = RaycastParams.new()
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    RayParamsVis.FilterDescendantsInstances = {LocalPlayer.Character}
+    local result = workspace:Raycast(origin, direction, RayParamsVis)
+    local isVisible = result and result.Instance and result.Instance:IsDescendantOf(targetPart.Parent)
     
-    local result = workspace:Raycast(origin, direction, rayParams)
+    -- Cache result
+    visibilityCache[cacheKey] = {result = isVisible, time = tick()}
     
-    return result and result.Instance and result.Instance:IsDescendantOf(targetPart.Parent)
-end
+    return isVisible
+end)
 
-local function IsActuallyVisible(targetPart)
+local IsActuallyVisible = LPH_JIT(function(targetPart)
     if not targetPart or not targetPart.Parent then return false end
+    
+    -- Check cache first
+    local cacheKey = targetPart
+    local cached = visibilityCache[cacheKey]
+    if cached and (tick() - cached.time) < VISIBILITY_CACHE_DURATION then
+        return cached.actualResult
+    end
+    
     local camera = workspace.CurrentCamera
     local origin = camera.CFrame.Position
     local direction = (targetPart.Position - origin).Unit * 500
-    local rayParams = RaycastParams.new()
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, camera, targetPart.Parent}
-    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    rayParams.IgnoreWater = true
     
-    local result = workspace:Raycast(origin, direction, rayParams)
+    RayParamsActual.FilterDescendantsInstances = {LocalPlayer.Character, camera, targetPart.Parent}
+    local result = workspace:Raycast(origin, direction, RayParamsActual)
     
+    local actuallyVisible = true
     if result and result.Instance then
         if result.Instance.Transparency < 1 and result.Instance.CanCollide then
-            return false
+            actuallyVisible = false
         end
     end
     
-    return true
-end
+    -- Cache result
+    if visibilityCache[cacheKey] then
+        visibilityCache[cacheKey].actualResult = actuallyVisible
+    else
+        visibilityCache[cacheKey] = {actualResult = actuallyVisible, time = tick()}
+    end
+    
+    return actuallyVisible
+end)
 
-task.spawn(function()
-    while task.wait(0.05) do
+task.spawn(LPH_JIT(function()
+    while task.wait(0.1) do
         if Config.Enabled and LocalPlayer.Character then
             local nearestEnemy, nearestDistance = nil, math.huge
             local mousePos = UserInputService:GetMouseLocation()
@@ -968,11 +1037,11 @@ task.spawn(function()
             _G.TargetIsVisible = false
         end
     end
-end)
+end))
 
 local OldNamecall
 if hookmetamethod then
-    OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    OldNamecall = hookmetamethod(game, "__namecall", LPH_JIT_MAX(function(self, ...)
         local method = getnamecallmethod()
         local args = {...}
         
@@ -1006,7 +1075,7 @@ if hookmetamethod then
         end
         
         return OldNamecall(self, unpack(args))
-    end)
+    end))
 else
     warn("hookmetamethod not found - silent aim won't work")
 end
@@ -1220,7 +1289,7 @@ local function updateBulletSpeedSlider()
     settingsGunMods.bulletSpeed = baseBSpeed
 end
 
-local function applyInfAmmo()
+local applyInfAmmo = LPH_JIT(function()
     if not togglesGunMods.infAmmo then return end
     local backpack = playerGunMods:FindFirstChild("Backpack")
     if not backpack then return end
@@ -1238,7 +1307,7 @@ local function applyInfAmmo()
             end
         end
     end
-end
+end)
 
 task.spawn(function()
     while true do
